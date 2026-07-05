@@ -29,13 +29,19 @@ import { ToolboxStateService } from './core/toolbox-state.service';
 export class App {
   readonly state = inject(ToolboxStateService);
   readonly auth = this.state.auth;
-  readonly title = APP_SETTINGS.appName;
-  readonly version = APP_SETTINGS.version;
   readonly loading = this.state.loading;
   readonly isSignedIn = computed(() => Boolean(this.auth.currentUser()));
   private readonly router = inject(Router);
   readonly isPublicRoute = signal(true);
   readonly menuOpen = signal(false);
+
+  get title(): string {
+    return APP_SETTINGS.appName;
+  }
+
+  get version(): string {
+    return APP_SETTINGS.version;
+  }
 
   constructor() {
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
