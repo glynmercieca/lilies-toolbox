@@ -11,6 +11,7 @@ import { formatUserIdentity, matchesUserEmail, matchesUserIdentity } from './ide
 import { SheetsSnapshot, ToolWithStatus } from './models';
 import { decorateTools } from './tool-status.util';
 import { ToolDetailDialogComponent } from '../tool-detail-dialog';
+import { DeleteToolDialogComponent } from '../delete-tool-dialog';
 import { ToolFormDialogComponent } from '../tool-form-dialog';
 
 @Injectable({ providedIn: 'root' })
@@ -24,16 +25,16 @@ export class ToolboxStateService {
   readonly auth = inject(GoogleAuthService);
   readonly loading = signal(false);
   readonly searchTerm = signal('');
-  readonly showUnavailableTools = signal(false);
   readonly savingToolId = signal<string | null>(null);
   private readonly snapshot = signal<SheetsSnapshot>({ tools: [], loans: [] });
   private readonly loadedUserEmail = signal<string | null>(null);
 
   readonly tools = computed(() => decorateTools(this.snapshot()));
+  readonly visibleTools = computed(() => this.tools().filter((tool) => !tool.deleted));
   readonly filteredTools = computed(() => {
     const query = this.searchTerm().trim().toLowerCase();
-    return this.tools().filter((tool) => {
-      if (!this.showUnavailableTools() && !tool.available) {
+    return this.visibleTools().filter((tool) => {
+      if (!tool.available) {
         return false;
       }
 
@@ -41,13 +42,11 @@ export class ToolboxStateService {
         return true;
       }
 
-      return [tool.name, tool.description, tool.notes, tool.owner].some((value) =>
-        value.toLowerCase().includes(query),
-      );
+      return [tool.name, tool.description, tool.notes, tool.owner].some((value) => value.toLowerCase().includes(query));
     });
   });
   readonly borrowedTools = computed(() =>
-    this.tools().filter(
+    this.visibleTools().filter(
       (tool) =>
         tool.activeLoan &&
         (matchesUserEmail(this.auth.currentUser(), tool.activeLoan.borrowerEmail) ||
@@ -55,7 +54,7 @@ export class ToolboxStateService {
     ),
   );
   readonly ownedTools = computed(() =>
-    this.tools().filter((tool) => matchesUserIdentity(this.auth.currentUser(), tool.owner)),
+    this.visibleTools().filter((tool) => matchesUserIdentity(this.auth.currentUser(), tool.owner)),
   );
 
   constructor() {
@@ -98,10 +97,6 @@ export class ToolboxStateService {
 
   setSearchTerm(value: string): void {
     this.searchTerm.set(value);
-  }
-
-  setShowUnavailableTools(value: boolean): void {
-    this.showUnavailableTools.set(value);
   }
 
   async refresh(): Promise<void> {
@@ -251,6 +246,38 @@ export class ToolboxStateService {
       this.notify(`${tool.name} updated.`);
     } catch (error) {
       this.notify(error instanceof Error ? error.message : 'Unable to update this tool.');
+    } finally {
+      this.savingToolId.set(null);
+    }
+  }
+
+  async deleteTool(tool: ToolWithStatus): Promise<void> {
+    const token = this.auth.accessToken();
+    if (!token || !tool.available) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(DeleteToolDialogComponent, {
+      data: {
+        toolId: tool.id,
+        toolName: tool.name,
+      },
+      maxWidth: '480px',
+      width: 'min(92vw, 480px)',
+    });
+
+    const confirmed = await firstValueFrom(dialogRef.afterClosed());
+    if (!confirmed) {
+      return;
+    }
+
+    this.savingToolId.set(tool.id);
+    try {
+      await this.sheets.markToolDeleted(token, tool);
+      await this.refresh();
+      this.notify(`${tool.name} deleted.`);
+    } catch (error) {
+      this.notify(error instanceof Error ? error.message : 'Unable to delete this tool.');
     } finally {
       this.savingToolId.set(null);
     }

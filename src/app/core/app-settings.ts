@@ -12,7 +12,7 @@ export interface AppSettings {
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   appName: 'Lilies Shed',
-  version: '1.0.0',
+  version: '1.0.1',
   googleClientId: '',
   spreadsheetId: '1ZmAkBYhR6y5JeRD5qF_gcC6_wBQzjm3QZMOQkJml4XU',
   toolsSheetName: 'Tools',

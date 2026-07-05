@@ -36,4 +36,21 @@ body {
   margin: 0;
   height: 100%;
 }
+
+.danger-button:not(:disabled) {
+  color: var(--mat-sys-error) !important;
+}
+
+.danger-button:not(:disabled) mat-icon {
+  color: var(--mat-sys-error) !important;
+}
+
+.danger-flat-button:not(:disabled) {
+  background: var(--mat-sys-error) !important;
+  color: var(--mat-sys-on-error) !important;
+}
+
+.danger-flat-button:not(:disabled) mat-icon {
+  color: var(--mat-sys-on-error) !important;
+}
 /* You can add global styles to this file, and also import other style files */

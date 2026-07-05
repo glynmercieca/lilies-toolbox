@@ -11,7 +11,7 @@
         <mat-card-title>{{ tool.name }}</mat-card-title>
         <mat-card-subtitle>{{ tool.id }}</mat-card-subtitle>
       </mat-card-header>
-      <mat-card-content class="d-grid gap-3">
+      <mat-card-content class="d-grid gap-3 flex-grow-1">
         <p class="m-0">{{ tool.description }}</p>
         <mat-chip-set>
           <mat-chip>
@@ -21,8 +21,7 @@
         </mat-chip-set>
       </mat-card-content>
       <mat-card-actions align="end">
-        <button mat-flat-button type="button" (click)="state.returnTool(tool)"
-          [disabled]="state.savingToolId() === tool.id">
+        <button mat-button type="button" (click)="state.returnTool(tool)" [disabled]="state.savingToolId() === tool.id">
           Mark returned
         </button>
       </mat-card-actions>
@@ -31,7 +30,7 @@
   } @empty {
   <div class="col-12">
     <mat-card appearance="outlined">
-      <mat-card-content>
+      <mat-card-content class="flex-grow-1">
         <p class="m-0 fs-5">No borrowed tools right now.</p>
         <p class="m-0 mt-3 text-body-secondary">
           Borrowed items will appear here while they are checked out to you.

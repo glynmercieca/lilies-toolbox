@@ -9,6 +9,7 @@ export interface ToolRecord {
   name: string;
   description: string;
   notes: string;
+  deleted: boolean;
   owner: string;
   ownerEmail: string;
   ownerFirstName: string;

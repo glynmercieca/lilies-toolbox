@@ -71,6 +71,7 @@ export class GoogleSheetsService {
       name: formValue.name,
       description: formValue.description,
       notes: formValue.notes,
+      deleted: false,
       owner: formatOwnerDisplay(ownerParts.firstName, ownerParts.lastName, ownerEmail),
       ownerFirstName: ownerParts.firstName,
       ownerLastName: ownerParts.lastName,
@@ -198,6 +199,9 @@ export class GoogleSheetsService {
           name: this.readCell(row, headers, 'name'),
           description: this.readCell(row, headers, 'description'),
           notes: this.readCell(row, headers, 'notes'),
+          deleted: this.parseDeleted(
+            this.readCell(row, headers, 'delete') || this.readCell(row, headers, 'deleted'),
+          ),
           ownerFirstName: ownerFirstName || parsedLegacyOwner.firstName,
           ownerLastName: ownerLastName || parsedLegacyOwner.lastName,
           ownerEmail: ownerEmail || parsedLegacyOwner.email,
@@ -258,6 +262,10 @@ export class GoogleSheetsService {
     return normalizeImageUrls(value.split(/[\n,]+/));
   }
 
+  private parseDeleted(value: string): boolean {
+    return ['true', 'yes', '1'].includes(value.trim().toLowerCase());
+  }
+
   private buildToolRow(schema: ToolsSheetSchema, tool: ToolRecord): Primitive[] {
     const headers = schema.headers.length
       ? schema.headers
@@ -282,6 +290,9 @@ export class GoogleSheetsService {
         return tool.description;
       case 'notes':
         return tool.notes;
+      case 'delete':
+      case 'deleted':
+        return tool.deleted ? 'TRUE' : 'FALSE';
       case 'owner':
         return tool.owner;
       case 'owner first name':
@@ -354,5 +365,19 @@ export class GoogleSheetsService {
 
   private today(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  async markToolDeleted(accessToken: string, tool: ToolRecord): Promise<void> {
+    const schema = await this.readToolsSheetSchema(accessToken);
+    const rowValues = this.buildToolRow(schema, {
+      ...tool,
+      deleted: true,
+    });
+
+    await this.updateRange(
+      accessToken,
+      `${APP_SETTINGS.toolsSheetName}!A${tool.rowNumber}:${this.columnNameFromIndex(rowValues.length)}${tool.rowNumber}`,
+      [rowValues],
+    );
   }
 }
