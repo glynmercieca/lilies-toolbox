@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -32,6 +32,7 @@ interface ToolFormDialogData {
     MatInputModule,
   ],
   templateUrl: './tool-form-dialog.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './tool-form-dialog.scss',
 })
 export class ToolFormDialogComponent {

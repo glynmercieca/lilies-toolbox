@@ -1,59 +1,63 @@
-# LiliesToolbox
+# Lilies Toolbox
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.18.
+Lilies Toolbox is an Angular Material PWA backed by a shared Google Sheet. Users sign in with Google, browse tool listings from the `Tools` tab, borrow and return items through the `Status` tab, and manage the tools they own.
 
-## Development server
+## Stack
 
-To start a local development server, run:
+- Angular `22.0.x`
+- Angular Material `22.0.x`
+- Angular service worker for PWA support
+- Google Identity Services for sign-in
+- Google Sheets API for read/write inventory actions
 
-```bash
-ng serve
-```
+## Local setup
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+1. Install dependencies:
 
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+If your global Node.js runtime is older than Angular 22 requires, the project automatically prefers a workspace-local Node runtime from `.tools/node-v22.22.3-win-x64` when it exists.
+
+2. Update `public/app-config.json` with a Google OAuth client ID:
+
+```json
+{
+  "appName": "Lilies Toolbox",
+  "googleClientId": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+  "spreadsheetId": "1ZmAkBYhR6y5JeRD5qF_gcC6_wBQzjm3QZMOQkJml4XU",
+  "toolsSheetName": "Tools",
+  "statusSheetName": "Status",
+  "sheetsScope": "https://www.googleapis.com/auth/spreadsheets"
+}
+```
+
+3. In Google Cloud:
+
+- Enable the Google Sheets API.
+- Create an OAuth client for a web application.
+- Add your local origin such as `http://localhost:4200` or `http://127.0.0.1:4200`.
+- Make sure the signed-in Google account can edit the target spreadsheet.
+
+4. Start the app:
 
 ```bash
-ng generate --help
+npm start
 ```
 
-## Building
-
-To build the project run:
+## Available scripts
 
 ```bash
-ng build
+npm start
+npm run build
+npm test -- --watch=false
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Behavior
 
-## Running unit tests
+- `Tools`: Lists sheet items with availability based on active rows in `Status`.
+- `Borrowed`: Shows active loans for the signed-in user and allows marking them returned.
+- `My Tools`: Lets the signed-in user add tools and edit owned tools that are not currently loaned out.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The PWA manifest locks the installed app to portrait orientation, and tools without images use a local placeholder asset.

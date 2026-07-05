@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-import { APP_SETTINGS, GOOGLE_CLIENT_ID_PLACEHOLDER } from './app-settings';
+import { APP_SETTINGS } from './app-settings';
 import { UserProfile } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -14,11 +14,11 @@ export class GoogleAuthService {
   readonly accessToken = computed(() => this.token());
   readonly isBusy = computed(() => this.busy());
   readonly error = computed(() => this.errorMessage());
-  readonly isConfigured = APP_SETTINGS.googleClientId !== GOOGLE_CLIENT_ID_PLACEHOLDER;
+  readonly isConfigured = computed(() => Boolean(APP_SETTINGS.googleClientId.trim()));
 
   async signIn(): Promise<void> {
-    if (!this.isConfigured) {
-      this.errorMessage.set('Add a Google OAuth client ID in app-settings.ts before signing in.');
+    if (!this.isConfigured()) {
+      this.errorMessage.set('Add a Google OAuth client ID in public/app-config.json before signing in.');
       return;
     }
 

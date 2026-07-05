@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -10,7 +10,7 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App, MatSnackBarModule],
-      providers: [provideExperimentalZonelessChangeDetection(), provideNoopAnimations(), provideRouter([])],
+      providers: [provideZonelessChangeDetection(), provideNoopAnimations(), provideRouter([])],
     }).compileComponents();
   });
 

@@ -1,4 +1,4 @@
-@if (!auth.isConfigured) {
+@if (!auth.isConfigured()) {
   <div class="auth-shell">
     <mat-card appearance="outlined">
       <mat-card-header>
@@ -7,7 +7,7 @@
       </mat-card-header>
       <mat-card-content>
         <p>
-          Update <code>src/app/core/app-settings.ts</code> with a Google OAuth client ID that has
+          Update <code>public/app-config.json</code> with a Google OAuth client ID that has
           access to the Sheets API and allows this app's origin.
         </p>
       </mat-card-content>

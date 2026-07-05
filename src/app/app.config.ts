@@ -2,7 +2,7 @@ import {
   ApplicationConfig,
   importProvidersFrom,
   provideBrowserGlobalErrorListeners,
-  provideExperimentalZonelessChangeDetection,
+  provideZonelessChangeDetection,
   isDevMode,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -14,7 +14,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection(),
+    provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
     provideAnimationsAsync(),
     importProvidersFrom(MatSnackBarModule),

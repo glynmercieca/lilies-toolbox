@@ -98,7 +98,26 @@ export class GoogleSheetsService {
     });
 
     if (!response.ok) {
-      throw new Error('Google Sheets request failed.');
+      let details = 'Google Sheets request failed.';
+
+      try {
+        const payload = (await response.json()) as {
+          error?: {
+            message?: string;
+            status?: string;
+          };
+        };
+
+        if (payload.error?.message) {
+          details = payload.error.message;
+        } else if (payload.error?.status) {
+          details = `Google Sheets request failed: ${payload.error.status}.`;
+        }
+      } catch {
+        // Keep the generic error when Google does not return JSON.
+      }
+
+      throw new Error(details);
     }
 
     return response;

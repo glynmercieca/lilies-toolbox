@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -29,6 +29,7 @@ interface ToolDetailDialogData {
     MatChipsModule,
   ],
   templateUrl: './tool-detail-dialog.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './tool-detail-dialog.scss',
 })
 export class ToolDetailDialogComponent {

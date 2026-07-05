@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -16,7 +16,9 @@ import { firstValueFrom } from 'rxjs';
 import { APP_SETTINGS } from './core/app-settings';
 import { GoogleAuthService } from './core/google-auth.service';
 import { GoogleSheetsService } from './core/google-sheets.service';
-import { LoanRecord, SheetsSnapshot, ToolWithStatus } from './core/models';
+import { formatUserIdentity, matchesUserIdentity } from './core/identity.util';
+import { SheetsSnapshot, ToolWithStatus } from './core/models';
+import { decorateTools } from './core/tool-status.util';
 import { ToolDetailDialogComponent } from './tool-detail-dialog';
 import { ToolFormDialogComponent } from './tool-form-dialog';
 
@@ -37,6 +39,7 @@ type Section = 'tools' | 'borrowed' | 'my-tools';
     MatToolbarModule,
   ],
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.scss',
 })
 export class App {
@@ -66,9 +69,13 @@ export class App {
     });
   });
   readonly borrowedTools = computed(() =>
-    this.tools().filter((tool) => tool.activeLoan && this.matchesCurrentUser(tool.activeLoan.person)),
+    this.tools().filter(
+      (tool) => tool.activeLoan && this.matchesCurrentUser(tool.activeLoan.person),
+    ),
   );
-  readonly ownedTools = computed(() => this.tools().filter((tool) => this.matchesCurrentUser(tool.owner)));
+  readonly ownedTools = computed(() =>
+    this.tools().filter((tool) => this.matchesCurrentUser(tool.owner)),
+  );
 
   constructor() {
     this.lockPortraitOrientation();
@@ -133,7 +140,7 @@ export class App {
 
     this.savingToolId.set(tool.id);
     try {
-      await this.sheets.addBorrowRequest(token, tool.id, user.name || user.email);
+      await this.sheets.addBorrowRequest(token, tool.id, formatUserIdentity(user));
       await this.refresh();
       this.activeSection.set('borrowed');
       this.notify(`Borrow request saved for ${tool.name}.`);
@@ -184,7 +191,7 @@ export class App {
 
     this.loading.set(true);
     try {
-      await this.sheets.addTool(token, result, user.name || user.email);
+      await this.sheets.addTool(token, result, formatUserIdentity(user));
       await this.refresh();
       this.notify('Tool added to the sheet.');
     } catch (error) {
@@ -232,32 +239,11 @@ export class App {
   }
 
   private decorateTools(snapshot: SheetsSnapshot): ToolWithStatus[] {
-    const activeLoanByTool = new Map<string, LoanRecord>();
-    const latestLoanByTool = new Map<string, LoanRecord>();
-
-    for (const loan of snapshot.loans) {
-      latestLoanByTool.set(loan.itemId, loan);
-      if (!loan.returnDate) {
-        activeLoanByTool.set(loan.itemId, loan);
-      }
-    }
-
-    return snapshot.tools.map((tool) => ({
-      ...tool,
-      activeLoan: activeLoanByTool.get(tool.id),
-      latestLoan: latestLoanByTool.get(tool.id),
-      available: !activeLoanByTool.has(tool.id),
-    }));
+    return decorateTools(snapshot);
   }
 
   private matchesCurrentUser(value: string): boolean {
-    const user = this.auth.currentUser();
-    if (!user || !value) {
-      return false;
-    }
-
-    const normalized = value.trim().toLowerCase();
-    return normalized === user.email.trim().toLowerCase() || normalized === user.name.trim().toLowerCase();
+    return matchesUserIdentity(this.auth.currentUser(), value);
   }
 
   private notify(message: string): void {
