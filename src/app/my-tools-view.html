@@ -14,7 +14,7 @@
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
   @for (tool of state.ownedTools(); track tool.id) {
   <div class="col d-flex">
-    <mat-card appearance="outlined" class="w-100 tool-card">
+    <mat-card appearance="outlined" class="w-100 d-flex flex-column h-100">
       <mat-card-header>
         <mat-card-title>{{ tool.name }}</mat-card-title>
         <mat-card-subtitle>{{ tool.id }}</mat-card-subtitle>

@@ -1,18 +1,9 @@
 <h2 mat-dialog-title>{{ data.tool.name }}</h2>
 <mat-dialog-content>
   <mat-card appearance="outlined">
-    <img class="w-100" mat-card-image [appResolvedSrc]="selectedImage()" [alt]="data.tool.name" (error)="fallbackImage($event)" />
+    <img class="w-100" mat-card-image [appResolvedSrc]="data.tool.image" [alt]="data.tool.name"
+      (error)="fallbackImage($event)" />
   </mat-card>
-
-  @if (data.tool.images.length > 1) {
-    <div class="d-flex flex-wrap gap-2 mt-3">
-      @for (image of data.tool.images; track image; let index = $index) {
-        <button mat-stroked-button type="button" (click)="setImage(index)">
-          Image {{ index + 1 }}
-        </button>
-      }
-    </div>
-  }
 
   <div class="d-grid gap-3 mt-3">
     <mat-chip-set>
@@ -25,10 +16,10 @@
         {{ data.tool.ownerFirstName || 'Unknown' }}
       </mat-chip>
       @if (data.tool.activeLoan?.borrowerFirstName) {
-        <mat-chip>
-          <mat-icon matChipAvatar>assignment_ind</mat-icon>
-          {{ data.tool.activeLoan.borrowerFirstName }}
-        </mat-chip>
+      <mat-chip>
+        <mat-icon matChipAvatar>assignment_ind</mat-icon>
+        {{ data.tool.activeLoan.borrowerFirstName }}
+      </mat-chip>
       }
       <mat-chip>
         <mat-icon matChipAvatar>tag</mat-icon>
@@ -39,21 +30,21 @@
     <p class="m-0">{{ data.tool.description }}</p>
 
     @if (data.tool.notes) {
-      <section class="note-block">
-        <mat-chip-set>
-          <mat-chip>
-            <mat-icon matChipAvatar>sticky_note_2</mat-icon>
-            Note
-          </mat-chip>
-        </mat-chip-set>
-        <p class="m-0">{{ data.tool.notes }}</p>
-      </section>
+    <section class="note-block">
+      <mat-chip-set>
+        <mat-chip>
+          <mat-icon matChipAvatar>sticky_note_2</mat-icon>
+          Note
+        </mat-chip>
+      </mat-chip-set>
+      <p class="m-0">{{ data.tool.notes }}</p>
+    </section>
     }
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Close</button>
   @if (data.canBorrow && data.tool.available) {
-    <button mat-flat-button [mat-dialog-close]="'borrow'">Request to borrow</button>
+  <button mat-flat-button [mat-dialog-close]="'borrow'">Borrow</button>
   }
 </mat-dialog-actions>

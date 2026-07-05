@@ -14,7 +14,7 @@ export interface ToolRecord {
   ownerEmail: string;
   ownerFirstName: string;
   ownerLastName: string;
-  images: string[];
+  image: string;
   rowNumber: number;
 }
 
@@ -39,8 +39,8 @@ export interface ToolFormValue {
   name: string;
   description: string;
   notes: string;
-  imageUrls: string[];
-  imageFiles: File[];
+  imageUrl: string;
+  imageFile: File | null;
 }
 
 export interface SheetsSnapshot {

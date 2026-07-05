@@ -2,11 +2,11 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 import { GoogleAuthService } from './google-auth.service';
-import { GoogleDriveService } from './google-drive.service';
 import { GoogleSheetsService } from './google-sheets.service';
+import { ImageUploadService } from './image-upload.service';
 import { formatUserIdentity, matchesUserEmail, matchesUserIdentity } from './identity.util';
 import { SheetsSnapshot, ToolWithStatus } from './models';
 import { decorateTools } from './tool-status.util';
@@ -19,7 +19,7 @@ export class ToolboxStateService {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly sheets = inject(GoogleSheetsService);
-  private readonly drive = inject(GoogleDriveService);
+  private readonly imageUpload = inject(ImageUploadService);
   private readonly router = inject(Router);
 
   readonly auth = inject(GoogleAuthService);
@@ -182,31 +182,43 @@ export class ToolboxStateService {
       maxWidth: '640px',
       width: 'min(92vw, 640px)',
     });
-
-    const result = await firstValueFrom(dialogRef.afterClosed());
-    if (!result) {
+    const component = dialogRef.componentInstance;
+    if (!component) {
       return;
     }
 
-    this.loading.set(true);
-    try {
-      const uploadedImageUrls = await this.drive.uploadImages(token, result.imageFiles);
-      await this.sheets.addTool(
-        token,
-        {
-          ...result,
-          imageUrls: [...result.imageUrls, ...uploadedImageUrls],
-        },
-        user.name,
-        user.email,
-      );
-      await this.refresh();
-      this.notify('Tool added.');
-    } catch (error) {
-      this.notify(error instanceof Error ? error.message : 'Unable to add a new tool.');
-    } finally {
-      this.loading.set(false);
-    }
+    let submitSubscription: Subscription | null = null;
+    submitSubscription = component.submitRequested.subscribe(async (result) => {
+      if (component.saving()) {
+        return;
+      }
+
+      component.setSaving(true);
+      this.loading.set(true);
+
+      try {
+        const uploadedImageUrl = await this.imageUpload.uploadImage(result.imageFile);
+        await this.sheets.addTool(
+          token,
+          {
+            ...result,
+            imageUrl: uploadedImageUrl || result.imageUrl,
+          },
+          user.name,
+          user.email,
+        );
+        await this.refresh();
+        dialogRef.close(true);
+        this.notify('Tool added.');
+      } catch (error) {
+        component.setSaving(false);
+        this.notify(error instanceof Error ? error.message : 'Unable to add a new tool.');
+      } finally {
+        this.loading.set(false);
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(() => submitSubscription?.unsubscribe());
   }
 
   async editTool(tool: ToolWithStatus): Promise<void> {
@@ -222,33 +234,45 @@ export class ToolboxStateService {
           name: tool.name,
           description: tool.description,
           notes: tool.notes,
-          imageUrls: tool.images,
-          imageFiles: [],
+          imageUrl: tool.image,
+          imageFile: null,
         },
       },
       maxWidth: '640px',
       width: 'min(92vw, 640px)',
     });
-
-    const result = await firstValueFrom(dialogRef.afterClosed());
-    if (!result) {
+    const component = dialogRef.componentInstance;
+    if (!component) {
       return;
     }
 
-    this.savingToolId.set(tool.id);
-    try {
-      const uploadedImageUrls = await this.drive.uploadImages(token, result.imageFiles);
-      await this.sheets.updateTool(token, tool, {
-        ...result,
-        imageUrls: [...result.imageUrls, ...uploadedImageUrls],
-      });
-      await this.refresh();
-      this.notify(`${tool.name} updated.`);
-    } catch (error) {
-      this.notify(error instanceof Error ? error.message : 'Unable to update this tool.');
-    } finally {
-      this.savingToolId.set(null);
-    }
+    let submitSubscription: Subscription | null = null;
+    submitSubscription = component.submitRequested.subscribe(async (result) => {
+      if (component.saving()) {
+        return;
+      }
+
+      component.setSaving(true);
+      this.savingToolId.set(tool.id);
+
+      try {
+        const uploadedImageUrl = await this.imageUpload.uploadImage(result.imageFile);
+        await this.sheets.updateTool(token, tool, {
+          ...result,
+          imageUrl: uploadedImageUrl || result.imageUrl,
+        });
+        await this.refresh();
+        dialogRef.close(true);
+        this.notify(`${tool.name} updated.`);
+      } catch (error) {
+        component.setSaving(false);
+        this.notify(error instanceof Error ? error.message : 'Unable to update this tool.');
+      } finally {
+        this.savingToolId.set(null);
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(() => submitSubscription?.unsubscribe());
   }
 
   async deleteTool(tool: ToolWithStatus): Promise<void> {

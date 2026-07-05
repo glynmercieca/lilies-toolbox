@@ -13,6 +13,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subject } from 'rxjs';
 
 import { fallbackImage } from './core/image-url.util';
 import { ResolvedImageDirective } from './core/resolved-image.directive';
@@ -22,6 +24,8 @@ interface ToolFormDialogData {
   mode: 'add' | 'edit';
   value?: ToolFormValue;
 }
+
+const MAX_IMAGE_FILE_SIZE_BYTES = 32 * 1024 * 1024;
 
 @Component({
   selector: 'app-tool-form-dialog',
@@ -36,6 +40,7 @@ interface ToolFormDialogData {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatProgressSpinnerModule,
     ResolvedImageDirective,
   ],
   templateUrl: './tool-form-dialog.html',
@@ -46,9 +51,13 @@ export class ToolFormDialogComponent implements OnDestroy {
   private readonly formBuilder = inject(FormBuilder);
   private readonly dialogRef = inject(MatDialogRef<ToolFormDialogComponent>);
   readonly data = inject<ToolFormDialogData>(MAT_DIALOG_DATA);
-  readonly imageUrls = signal<string[]>(this.data.value?.imageUrls ?? []);
-  readonly selectedFiles = signal<Array<{ file: File; previewUrl: string }>>([]);
+  readonly imageUrl = signal(this.data.value?.imageUrl ?? '');
+  readonly selectedFile = signal<{ file: File; previewUrl: string } | null>(null);
+  readonly imageSelectionError = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly submitRequested = new Subject<ToolFormValue>();
   protected readonly fallbackImage = fallbackImage;
+  protected readonly maxImageSizeMb = 32;
 
   readonly form = this.formBuilder.nonNullable.group({
     name: [this.data.value?.name ?? '', Validators.required],
@@ -63,48 +72,99 @@ export class ToolFormDialogComponent implements OnDestroy {
       return;
     }
 
-    const nextFiles = files.map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    const oversizedFiles = files.filter((file) => file.size > MAX_IMAGE_FILE_SIZE_BYTES);
+    const allowedFiles = files.filter((file) => file.size <= MAX_IMAGE_FILE_SIZE_BYTES);
 
-    this.selectedFiles.update((current) => [...current, ...nextFiles]);
+    if (oversizedFiles.length) {
+      const fileList = oversizedFiles.map((file) => file.name || 'Unnamed image').join(', ');
+      this.imageSelectionError.set(`Images must be ${this.maxImageSizeMb} MB or smaller. Skipped: ${fileList}.`);
+    } else {
+      this.imageSelectionError.set(null);
+    }
+
+    if (!allowedFiles.length) {
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    const nextFile = allowedFiles[0];
+    const currentSelectedFile = this.selectedFile();
+    if (currentSelectedFile) {
+      URL.revokeObjectURL(currentSelectedFile.previewUrl);
+    }
+
+    this.selectedFile.set({
+      file: nextFile,
+      previewUrl: URL.createObjectURL(nextFile),
+    });
 
     if (input) {
       input.value = '';
     }
   }
 
-  removeExistingImage(index: number): void {
-    this.imageUrls.update((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  removeExistingImage(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.imageUrl.set('');
   }
 
-  removeSelectedFile(index: number): void {
-    const files = this.selectedFiles();
-    const selectedFile = files[index];
+  removeSelectedFile(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    const selectedFile = this.selectedFile();
     if (selectedFile) {
       URL.revokeObjectURL(selectedFile.previewUrl);
     }
 
-    this.selectedFiles.set(files.filter((_, currentIndex) => currentIndex !== index));
+    this.selectedFile.set(null);
   }
 
   submit(): void {
+    if (this.saving()) {
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    this.dialogRef.close({
+    if (this.imageSelectionError()) {
+      return;
+    }
+
+    this.submitRequested.next({
       ...this.form.getRawValue(),
-      imageUrls: this.imageUrls(),
-      imageFiles: this.selectedFiles().map((entry) => entry.file),
+      imageUrl: this.imageUrl(),
+      imageFile: this.selectedFile()?.file ?? null,
     });
   }
 
+  setSaving(saving: boolean): void {
+    this.saving.set(saving);
+    this.dialogRef.disableClose = saving;
+
+    if (saving) {
+      this.form.disable({ emitEvent: false });
+      return;
+    }
+
+    this.form.enable({ emitEvent: false });
+  }
+
   ngOnDestroy(): void {
-    for (const file of this.selectedFiles()) {
-      URL.revokeObjectURL(file.previewUrl);
+    this.submitRequested.complete();
+
+    const selectedFile = this.selectedFile();
+    if (selectedFile) {
+      URL.revokeObjectURL(selectedFile.previewUrl);
     }
   }
 }

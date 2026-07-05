@@ -139,7 +139,7 @@ export class GoogleAuthService {
     return new Promise<GoogleTokenResponse>((resolve, reject) => {
       const tokenClient = window.google!.accounts.oauth2.initTokenClient({
         client_id: APP_SETTINGS.googleClientId,
-        scope: ['openid', 'email', 'profile', APP_SETTINGS.sheetsScope, APP_SETTINGS.driveFileScope]
+        scope: ['openid', 'email', 'profile', APP_SETTINGS.sheetsScope]
           .filter(Boolean)
           .join(' '),
         callback: (response) => {

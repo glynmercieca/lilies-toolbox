@@ -11,13 +11,13 @@
       [opened]="menuOpen()"
       (closedStart)="closeMenu()"
     >
-      <div class="drawer-header d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="m-0 fs-5">Menu</h2>
         <button mat-icon-button type="button" (click)="closeMenu()" aria-label="Close menu">
           <mat-icon>close</mat-icon>
         </button>
       </div>
-      <div class="drawer-actions d-grid gap-2">
+      <div class="d-grid gap-2 flex-grow-1 align-content-start">
         <button mat-button type="button" (click)="refresh()" [disabled]="loading()" class="justify-content-start">
           <mat-icon>refresh</mat-icon>
           Reload
@@ -27,7 +27,7 @@
           Sign out
         </button>
       </div>
-      <div class="drawer-version text-body-secondary small">
+      <div class="text-body-secondary small mt-3">
         Version {{ version }}
       </div>
     </mat-drawer>

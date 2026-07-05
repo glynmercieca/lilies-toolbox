@@ -5,7 +5,7 @@
       <mat-label>Name</mat-label>
       <input matInput formControlName="name" />
       @if (form.controls.name.invalid && form.controls.name.touched) {
-        <mat-error>Name is required.</mat-error>
+      <mat-error>Name is required.</mat-error>
       }
     </mat-form-field>
 
@@ -13,7 +13,7 @@
       <mat-label>Description</mat-label>
       <textarea matInput rows="4" formControlName="description"></textarea>
       @if (form.controls.description.invalid && form.controls.description.touched) {
-        <mat-error>Description is required.</mat-error>
+      <mat-error>Description is required.</mat-error>
       }
     </mat-form-field>
 
@@ -24,60 +24,58 @@
 
     <div class="d-grid gap-2">
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <button mat-stroked-button type="button" (click)="picker.click()">
+        <button mat-stroked-button type="button" (click)="picker.click()" [disabled]="saving()">
           <mat-icon>photo_camera</mat-icon>
-          Add photo
+          {{ imageUrl() || selectedFile() ? 'Replace photo' : 'Add photo' }}
         </button>
-        <span class="text-body-secondary small">Open the camera or gallery on mobile to attach tool images.</span>
+        <span class="text-body-secondary small">
+          Open the camera or gallery on mobile to attach one tool image. Max file size up to {{ maxImageSizeMb }} MB.
+        </span>
       </div>
 
-      <input
-        #picker
-        hidden
-        type="file"
-        accept="image/*"
-        capture="environment"
-        multiple
-        (change)="onFilesSelected($event)"
-      />
+      @if (imageSelectionError()) {
+      <div class="small text-danger">{{ imageSelectionError() }}</div>
+      }
 
-      @if (imageUrls().length || selectedFiles().length) {
-        <div class="row row-cols-2 row-cols-sm-3 g-2">
-          @for (imageUrl of imageUrls(); track imageUrl; let index = $index) {
-            <div class="col d-flex">
-              <mat-card appearance="outlined" class="w-100">
-                <img class="w-100" mat-card-image [appResolvedSrc]="imageUrl" alt="Existing tool image" (error)="fallbackImage($event)" />
-                <mat-card-actions align="end">
-                  <button mat-button type="button" (click)="removeExistingImage(index)">Remove</button>
-                </mat-card-actions>
-              </mat-card>
-            </div>
-          }
+      <input #picker hidden type="file" accept="image/*" capture="environment" (change)="onFilesSelected($event)" />
 
-          @for (selectedImage of selectedFiles(); track selectedImage.previewUrl; let index = $index) {
-            <div class="col d-flex">
-              <mat-card appearance="outlined" class="w-100">
-                <img
-                  class="w-100"
-                  mat-card-image
-                  [src]="selectedImage.previewUrl"
-                  [alt]="selectedImage.file.name || 'Selected image'"
-                  (error)="fallbackImage($event)"
-                />
-                <mat-card-actions align="end">
-                  <button mat-button type="button" (click)="removeSelectedFile(index)">Remove</button>
-                </mat-card-actions>
-              </mat-card>
-            </div>
-          }
+      @if (imageUrl() || selectedFile()) {
+      <div class="row row-cols-1 row-cols-sm-2 g-2">
+        @if (imageUrl()) {
+        <div class="col d-flex">
+          <mat-card appearance="outlined" class="w-100">
+            <img class="w-100" mat-card-image [appResolvedSrc]="imageUrl()" alt="Existing tool image"
+              (error)="fallbackImage($event)" />
+            <mat-card-actions align="end">
+              <button mat-button type="button" (click)="removeExistingImage()" [disabled]="saving()">Remove</button>
+            </mat-card-actions>
+          </mat-card>
         </div>
+        }
+
+        @if (selectedFile(); as selectedImage) {
+        <div class="col d-flex">
+          <mat-card appearance="outlined" class="w-100">
+            <img class="w-100" mat-card-image [src]="selectedImage.previewUrl"
+              [alt]="selectedImage.file.name || 'Selected image'" (error)="fallbackImage($event)" />
+            <mat-card-actions align="end">
+              <button mat-button type="button" (click)="removeSelectedFile()" [disabled]="saving()">Remove</button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+        }
+      </div>
       }
     </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-flat-button (click)="submit()">
-    {{ data.mode === 'add' ? 'Add tool' : 'Save changes' }}
+  <button mat-button mat-dialog-close [disabled]="saving()">Cancel</button>
+  <button mat-flat-button (click)="submit()" [disabled]="!!imageSelectionError() || saving()">
+    @if (saving()) {
+    <mat-spinner diameter="18"></mat-spinner>
+    } @else {
+    Save
+    }
   </button>
 </mat-dialog-actions>

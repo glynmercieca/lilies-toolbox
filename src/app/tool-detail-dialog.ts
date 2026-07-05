@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -39,11 +39,5 @@ interface ToolDetailDialogData {
 })
 export class ToolDetailDialogComponent {
   readonly data = inject<ToolDetailDialogData>(MAT_DIALOG_DATA);
-  readonly selectedIndex = signal(0);
-  readonly selectedImage = computed(() => this.data.tool.images[this.selectedIndex()] ?? '');
   protected readonly fallbackImage = fallbackImage;
-
-  setImage(index: number): void {
-    this.selectedIndex.set(index);
-  }
 }

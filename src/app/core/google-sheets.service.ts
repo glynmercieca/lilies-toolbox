@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { APP_SETTINGS } from './app-settings';
-import { normalizeImageUrls } from './image-url.util';
+import { normalizeImageUrl } from './image-url.util';
 import { LoanRecord, SheetsSnapshot, ToolFormValue, ToolRecord } from './models';
 import { formatOwnerDisplay, splitUserName } from './identity.util';
 
@@ -76,7 +76,7 @@ export class GoogleSheetsService {
       ownerFirstName: ownerParts.firstName,
       ownerLastName: ownerParts.lastName,
       ownerEmail,
-      images: formValue.imageUrls,
+      image: formValue.imageUrl,
       rowNumber: 0,
     });
 
@@ -90,7 +90,7 @@ export class GoogleSheetsService {
       name: formValue.name,
       description: formValue.description,
       notes: formValue.notes,
-      images: formValue.imageUrls,
+      image: formValue.imageUrl,
     });
 
     await this.updateRange(
@@ -211,7 +211,7 @@ export class GoogleSheetsService {
               ownerLastName || parsedLegacyOwner.lastName,
               ownerEmail || parsedLegacyOwner.email,
             ) || legacyOwner,
-          images: this.parseImages(this.readCell(row, headers, 'images')),
+          image: this.parseImage(this.readCell(row, headers, 'image')),
           rowNumber: index + 2,
         };
       })
@@ -258,8 +258,8 @@ export class GoogleSheetsService {
     return value.trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
-  private parseImages(value: string): string[] {
-    return normalizeImageUrls(value.split(/[\n,]+/));
+  private parseImage(value: string): string {
+    return normalizeImageUrl(value);
   }
 
   private parseDeleted(value: string): boolean {
@@ -269,7 +269,7 @@ export class GoogleSheetsService {
   private buildToolRow(schema: ToolsSheetSchema, tool: ToolRecord): Primitive[] {
     const headers = schema.headers.length
       ? schema.headers
-      : ['Id', 'Name', 'Description', 'Notes', 'Owner', 'Images'];
+      : ['Id', 'Name', 'Description', 'Notes', 'Owner', 'Image'];
     const values = new Array<Primitive>(headers.length).fill('');
 
     headers.forEach((header, index) => {
@@ -303,8 +303,8 @@ export class GoogleSheetsService {
         return tool.ownerLastName;
       case 'owner email':
         return tool.ownerEmail;
-      case 'images':
-        return tool.images.join('\n');
+      case 'image':
+        return tool.image;
       default:
         return '';
     }

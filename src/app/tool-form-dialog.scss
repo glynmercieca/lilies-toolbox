@@ -1,8 +1,15 @@
+mat-card {
+  max-height: 250px;
+  overflow: hidden;
+}
+
 mat-dialog-content {
   min-width: min(100vw - 48px, 560px);
 }
 
 mat-card img {
+  width: 100%;
   aspect-ratio: 1 / 1;
+  max-height: 250px;
   object-fit: cover;
 }
