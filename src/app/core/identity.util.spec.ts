@@ -4,9 +4,12 @@ import { formatUserIdentity, matchesUserEmail, matchesUserIdentity } from './ide
 import { UserProfile } from './models';
 
 const user: UserProfile = {
+  id: 'user-1',
   email: 'glyn@example.com',
   name: 'Glyn Morgan',
   picture: '',
+  firstName: 'Glyn',
+  lastName: 'Morgan',
 };
 
 describe('identity utilities', () => {

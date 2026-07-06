@@ -1,10 +1,12 @@
 {
   "appName": "Lilies Shed",
   "version": "1.0.0",
-  "googleClientId": "21862625088-u1u97fd14nvonu70kbd50hkaahsnkr3e.apps.googleusercontent.com",
-  "spreadsheetId": "1ZmAkBYhR6y5JeRD5qF_gcC6_wBQzjm3QZMOQkJml4XU",
-  "toolsSheetName": "Tools",
-  "statusSheetName": "Status",
-  "sheetsScope": "https://www.googleapis.com/auth/spreadsheets",
+  "firebaseApiKey": "AIzaSyD7CU6Omy-PuizKKjKApWxyz9jiwghoD0A",
+  "firebaseAuthDomain": "shed-3fc03.firebaseapp.com",
+  "firebaseProjectId": "shed-3fc03",
+  "firebaseStorageBucket": "shed-3fc03.firebasestorage.app",
+  "firebaseMessagingSenderId": "391381086192",
+  "firebaseAppId": "1:391381086192:web:9dd4ef13664e97d76fb735",
+  "firebaseMeasurementId": "G-G7V312KBDZ",
   "imgbbApiKey": "86d672f1de34b21c4f8c2d32ac97b76e"
 }

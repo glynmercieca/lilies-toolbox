@@ -4,10 +4,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
 
-import { GoogleAuthService } from './google-auth.service';
-import { GoogleSheetsService } from './google-sheets.service';
+import { FirebaseAuthService } from './firebase-auth.service';
+import { FirestoreToolboxService } from './firestore-toolbox.service';
 import { ImageUploadService } from './image-upload.service';
-import { formatUserIdentity, matchesUserEmail, matchesUserIdentity } from './identity.util';
+import { matchesUserId } from './identity.util';
 import { SheetsSnapshot, ToolWithStatus } from './models';
 import { decorateTools } from './tool-status.util';
 import { ToolDetailDialogComponent } from '../tool-detail-dialog';
@@ -18,11 +18,11 @@ import { ToolFormDialogComponent } from '../tool-form-dialog';
 export class ToolboxStateService {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly sheets = inject(GoogleSheetsService);
+  private readonly toolbox = inject(FirestoreToolboxService);
   private readonly imageUpload = inject(ImageUploadService);
   private readonly router = inject(Router);
 
-  readonly auth = inject(GoogleAuthService);
+  readonly auth = inject(FirebaseAuthService);
   readonly loading = signal(false);
   readonly searchTerm = signal('');
   readonly savingToolId = signal<string | null>(null);
@@ -47,15 +47,10 @@ export class ToolboxStateService {
   });
   readonly borrowedTools = computed(() =>
     this.visibleTools().filter(
-      (tool) =>
-        tool.activeLoan &&
-        (matchesUserEmail(this.auth.currentUser(), tool.activeLoan.borrowerEmail) ||
-          (!tool.activeLoan.borrowerEmail && matchesUserIdentity(this.auth.currentUser(), tool.activeLoan.borrower))),
+      (tool) => tool.activeLoan && matchesUserId(this.auth.currentUser(), tool.activeLoan.borrowerId),
     ),
   );
-  readonly ownedTools = computed(() =>
-    this.visibleTools().filter((tool) => matchesUserIdentity(this.auth.currentUser(), tool.owner)),
-  );
+  readonly ownedTools = computed(() => this.visibleTools().filter((tool) => matchesUserId(this.auth.currentUser(), tool.ownerId)));
 
   constructor() {
     effect(() => {
@@ -88,7 +83,7 @@ export class ToolboxStateService {
   }
 
   async signOut(): Promise<void> {
-    this.auth.signOut();
+    await this.auth.signOut();
     this.snapshot.set({ tools: [], loans: [] });
     this.searchTerm.set('');
     this.loadedUserEmail.set(null);
@@ -100,17 +95,16 @@ export class ToolboxStateService {
   }
 
   async refresh(): Promise<void> {
-    const token = this.auth.accessToken();
-    if (!token) {
+    if (!(await this.auth.ensureValidSession())) {
       return;
     }
 
     this.loading.set(true);
     try {
-      const snapshot = await this.sheets.loadSnapshot(token);
+      const snapshot = await this.toolbox.loadSnapshot();
       this.snapshot.set(snapshot);
     } catch (error) {
-      this.notify(error instanceof Error ? error.message : 'Unable to refresh Google Sheet data.');
+      this.notify(error instanceof Error ? error.message : 'Unable to refresh toolbox data.');
     } finally {
       this.loading.set(false);
     }
@@ -120,7 +114,7 @@ export class ToolboxStateService {
     const dialogRef = this.dialog.open(ToolDetailDialogComponent, {
       data: {
         tool,
-        canBorrow: !matchesUserIdentity(this.auth.currentUser(), tool.owner),
+        canBorrow: !matchesUserId(this.auth.currentUser(), tool.ownerId),
       },
       maxWidth: '640px',
       width: 'min(92vw, 640px)',
@@ -133,15 +127,14 @@ export class ToolboxStateService {
   }
 
   async borrowTool(tool: ToolWithStatus): Promise<void> {
-    const token = this.auth.accessToken();
     const user = this.auth.currentUser();
-    if (!token || !user || !tool.available) {
+    if (!user || !tool.available) {
       return;
     }
 
     this.savingToolId.set(tool.id);
     try {
-      await this.sheets.addBorrowRequest(token, tool.id, formatUserIdentity(user));
+      await this.toolbox.addBorrowRequest(tool.id, user);
       await this.refresh();
       await this.router.navigate(['/borrowed']);
       this.notify(`Borrow request saved for ${tool.name}.`);
@@ -153,14 +146,13 @@ export class ToolboxStateService {
   }
 
   async returnTool(tool: ToolWithStatus): Promise<void> {
-    const token = this.auth.accessToken();
-    if (!token || !tool.activeLoan) {
+    if (!tool.activeLoan) {
       return;
     }
 
     this.savingToolId.set(tool.id);
     try {
-      await this.sheets.markReturned(token, tool.activeLoan);
+      await this.toolbox.markReturned(tool.activeLoan);
       await this.refresh();
       this.notify(`${tool.name} marked as returned.`);
     } catch (error) {
@@ -171,9 +163,8 @@ export class ToolboxStateService {
   }
 
   async addTool(): Promise<void> {
-    const token = this.auth.accessToken();
     const user = this.auth.currentUser();
-    if (!token || !user) {
+    if (!user) {
       return;
     }
 
@@ -198,14 +189,12 @@ export class ToolboxStateService {
 
       try {
         const uploadedImageUrl = await this.imageUpload.uploadImage(result.imageFile);
-        await this.sheets.addTool(
-          token,
+        await this.toolbox.addTool(
           {
             ...result,
             imageUrl: uploadedImageUrl || result.imageUrl,
           },
-          user.name,
-          user.email,
+          user,
         );
         await this.refresh();
         dialogRef.close(true);
@@ -222,8 +211,7 @@ export class ToolboxStateService {
   }
 
   async editTool(tool: ToolWithStatus): Promise<void> {
-    const token = this.auth.accessToken();
-    if (!token || !tool.available) {
+    if (!tool.available) {
       return;
     }
 
@@ -257,7 +245,7 @@ export class ToolboxStateService {
 
       try {
         const uploadedImageUrl = await this.imageUpload.uploadImage(result.imageFile);
-        await this.sheets.updateTool(token, tool, {
+        await this.toolbox.updateTool(tool, {
           ...result,
           imageUrl: uploadedImageUrl || result.imageUrl,
         });
@@ -276,8 +264,7 @@ export class ToolboxStateService {
   }
 
   async deleteTool(tool: ToolWithStatus): Promise<void> {
-    const token = this.auth.accessToken();
-    if (!token || !tool.available) {
+    if (!tool.available) {
       return;
     }
 
@@ -297,7 +284,7 @@ export class ToolboxStateService {
 
     this.savingToolId.set(tool.id);
     try {
-      await this.sheets.markToolDeleted(token, tool);
+      await this.toolbox.markToolDeleted(tool);
       await this.refresh();
       this.notify(`${tool.name} deleted.`);
     } catch (error) {

@@ -31,6 +31,10 @@ export function formatUserIdentity(user: UserProfile): string {
   return name || email;
 }
 
+export function formatUserDocumentId(email: string): string {
+  return normalize(email).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
 export function splitUserName(name: string): { firstName: string; lastName: string } {
   const trimmedName = name.trim();
   if (!trimmedName) {
@@ -65,6 +69,14 @@ export function matchesUserEmail(user: UserProfile | null, email: string): boole
   }
 
   return normalize(user.email) === normalize(email);
+}
+
+export function matchesUserId(user: UserProfile | null, id: string): boolean {
+  if (!user || !id.trim()) {
+    return false;
+  }
+
+  return normalize(user.id) === normalize(id);
 }
 
 export function matchesUserIdentity(user: UserProfile | null, value: string): boolean {

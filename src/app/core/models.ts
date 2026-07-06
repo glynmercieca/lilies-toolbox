@@ -1,32 +1,37 @@
 export interface UserProfile {
+  id: string;
   email: string;
   name: string;
   picture: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface ToolRecord {
+  documentId: string;
   id: string;
   name: string;
   description: string;
   notes: string;
   deleted: boolean;
+  ownerId: string;
   owner: string;
   ownerEmail: string;
   ownerFirstName: string;
   ownerLastName: string;
   image: string;
-  rowNumber: number;
 }
 
 export interface LoanRecord {
+  id: string;
   itemId: string;
+  borrowerId: string;
   borrower: string;
   borrowerEmail: string;
   borrowerFirstName: string;
   borrowerLastName: string;
   loanDate: string;
   returnDate: string;
-  rowNumber: number;
 }
 
 export interface ToolWithStatus extends ToolRecord {

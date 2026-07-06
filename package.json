@@ -22,6 +22,7 @@
     "@angular/router": "^22.0.5",
     "@angular/service-worker": "^22.0.5",
     "bootstrap": "^5.3.8",
+    "firebase": "^12.15.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

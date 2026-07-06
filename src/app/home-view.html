@@ -14,8 +14,8 @@
       </p>
       @if (!auth.isConfigured()) {
       <p class="m-0 mt-3">
-        Google sign-in is not configured yet. Update <code>public/app-config.json</code> with a
-        valid OAuth client ID.
+        Firebase is not configured yet. Update <code>public/app-config.json</code> with valid
+        Firebase web app settings.
       </p>
       } @else if (!auth.currentUser()) {
       <div class="d-flex flex-wrap gap-3 mt-3">
