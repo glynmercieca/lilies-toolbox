@@ -14,6 +14,7 @@ import { decorateTools } from './tool-status.util';
 import { ToolDetailDialogComponent } from '../tool-detail-dialog';
 import { DeleteToolDialogComponent } from '../delete-tool-dialog';
 import { NotificationOptInDialogComponent } from '../notification-opt-in-dialog';
+import { RequestToolDialogComponent } from '../request-tool-dialog';
 import { ToolFormDialogComponent } from '../tool-form-dialog';
 
 @Injectable({ providedIn: 'root' })
@@ -337,6 +338,45 @@ export class ToolboxStateService {
     } finally {
       this.savingToolId.set(null);
     }
+  }
+
+  async requestTool(): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(RequestToolDialogComponent, {
+      maxWidth: '560px',
+      width: 'min(92vw, 560px)',
+    });
+    const component = dialogRef.componentInstance;
+    if (!component) {
+      return;
+    }
+
+    let submitSubscription: Subscription | null = null;
+    submitSubscription = component.submitRequested.subscribe(async (result) => {
+      if (component.saving()) {
+        return;
+      }
+
+      component.setSaving(true);
+      this.loading.set(true);
+
+      try {
+        await this.toolbox.addToolRequest(result, user);
+        dialogRef.close(true);
+        this.notify('Tool request sent.');
+      } catch (error) {
+        component.setSaving(false);
+        this.notify(error instanceof Error ? error.message : 'Unable to send tool request.');
+      } finally {
+        this.loading.set(false);
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(() => submitSubscription?.unsubscribe());
   }
 
   private notify(message: string): void {

@@ -17,6 +17,7 @@ import {
 import { FirebaseClientService } from './firebase-client.service';
 import { formatOwnerDisplay, splitUserName } from './identity.util';
 import { LoanRecord, SheetsSnapshot, ToolFormValue, ToolRecord, UserProfile } from './models';
+import { ToolRequestFormValue } from '../request-tool-dialog';
 
 interface FirestoreUserRecord {
   email?: string;
@@ -117,6 +118,16 @@ export class FirestoreToolboxService {
     await updateDoc(doc(this.firebase.firestore, 'tools', tool.documentId), {
       deleted: true,
       updatedAt: serverTimestamp(),
+    });
+  }
+
+  async addToolRequest(request: ToolRequestFormValue, requester: UserProfile): Promise<void> {
+    const requestRef = doc(collection(this.firebase.firestore, 'toolRequests'));
+    await setDoc(requestRef, {
+      title: request.title,
+      message: request.message,
+      requesterId: requester.id,
+      createdAt: serverTimestamp(),
     });
   }
 

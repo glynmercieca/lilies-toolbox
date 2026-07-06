@@ -29,6 +29,10 @@
             <mat-icon class="theme-icon moon-icon">dark_mode</mat-icon>
           </div>
         </div>
+        <button mat-button type="button" (click)="requestTool()" class="justify-content-start">
+          <mat-icon>campaign</mat-icon>
+          Request tool
+        </button>
         <button mat-button type="button" (click)="refresh()" [disabled]="loading()" class="justify-content-start">
           <mat-icon>refresh</mat-icon>
           Reload

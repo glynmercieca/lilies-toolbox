@@ -65,6 +65,11 @@ export class App {
     this.menuOpen.set(false);
   }
 
+  async requestTool(): Promise<void> {
+    this.menuOpen.set(false);
+    await this.state.requestTool();
+  }
+
   openMenu(): void {
     this.menuOpen.set(true);
   }

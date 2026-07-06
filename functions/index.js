@@ -49,6 +49,21 @@ exports.notifyOwnerOnReturn = onDocumentUpdated(
   },
 );
 
+exports.notifyUsersOnToolRequest = onDocumentCreated(
+  {
+    document: 'toolRequests/{requestId}',
+    region: FUNCTION_REGION,
+  },
+  async (event) => {
+    const toolRequest = event.data?.data();
+    if (!toolRequest) {
+      return;
+    }
+
+    await notifyUsersOfToolRequest(toolRequest);
+  },
+);
+
 async function notifyOwner(loan, eventType) {
   const toolId = readString(loan.toolId) || readString(loan.itemId);
   if (!toolId) {
@@ -117,6 +132,72 @@ async function resolveBorrowerName(borrowerId, loan) {
   }
 
   return readString(loan.borrower) || 'Someone';
+}
+
+async function notifyUsersOfToolRequest(toolRequest) {
+  const title = readString(toolRequest.title);
+  const message = readString(toolRequest.message);
+  if (!title || !message) {
+    logger.warn('Tool request missing title or message.', { toolRequest });
+    return;
+  }
+
+  const usersSnapshot = await db.collection('users').get();
+  const tokenOwners = new Map();
+
+  usersSnapshot.forEach((documentSnapshot) => {
+    const user = documentSnapshot.data() || {};
+    const tokens = readStringArray(user.notificationTokens);
+    tokens.forEach((token) => tokenOwners.set(token, documentSnapshot.id));
+  });
+
+  const tokens = [...tokenOwners.keys()];
+  if (!tokens.length) {
+    logger.info('No user notification tokens found for tool request.');
+    return;
+  }
+
+  const body = `${title}: ${message}`;
+  const response = await messaging.sendEachForMulticast({
+    tokens,
+    notification: {
+      title: 'Tool Request',
+      body,
+    },
+    webpush: {
+      notification: {
+        title: 'Tool Request',
+        body,
+        icon: APP_ICON,
+      },
+      fcmOptions: {
+        link: APP_LINK,
+      },
+    },
+  });
+
+  const invalidTokensByUser = new Map();
+  response.responses.forEach((result, index) => {
+    if (!result.success && isInvalidTokenError(result.error?.code)) {
+      const token = tokens[index];
+      const userId = tokenOwners.get(token);
+      if (!userId) {
+        return;
+      }
+
+      const userTokens = invalidTokensByUser.get(userId) || [];
+      userTokens.push(token);
+      invalidTokensByUser.set(userId, userTokens);
+    }
+  });
+
+  await Promise.all(
+    [...invalidTokensByUser.entries()].map(([userId, invalidTokens]) =>
+      db.collection('users').doc(userId).update({
+        notificationTokens: FieldValue.arrayRemove(...invalidTokens),
+      }),
+    ),
+  );
 }
 
 function buildMessage(tokens, toolName, borrowerName, eventType) {
