@@ -43,19 +43,24 @@ export class FirebaseAuthService {
     });
   }
 
-  async signIn(): Promise<void> {
+  async signIn(): Promise<UserProfile | null> {
     if (!this.isConfigured()) {
       this.errorMessage.set('Add Firebase web config in src/environments/environment*.ts before signing in.');
-      return;
+      return null;
     }
 
     this.busy.set(true);
     this.errorMessage.set(null);
 
     try {
-      await signInWithPopup(this.firebase.auth, this.firebase.googleProvider);
+      const credential = await signInWithPopup(this.firebase.auth, this.firebase.googleProvider);
+      const userProfile = this.mapUser(credential.user);
+      this.user.set(userProfile);
+      await this.upsertUserDocument(userProfile);
+      return userProfile;
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Google sign-in failed.');
+      return null;
     } finally {
       this.busy.set(false);
     }

@@ -89,8 +89,7 @@ export class ToolboxStateService {
   }
 
   async signIn(): Promise<void> {
-    await this.auth.signIn();
-    const user = this.auth.currentUser();
+    const user = await this.auth.signIn();
     if (user) {
       const shouldPromptForNotifications = await this.messaging.canPromptForNotifications();
       if (shouldPromptForNotifications) {
