@@ -17,6 +17,40 @@
   background: var(--mat-sys-surface-container-low);
 }
 
+.theme-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px 0 8px;
+}
+
+.theme-toggle-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.theme-icon {
+  flex: 0 0 auto;
+  color: var(--mat-sys-secondary);
+  opacity: 0.78;
+}
+
+.sun-icon {
+  color: #d9921a;
+}
+
+.moon-icon {
+  color: var(--mat-sys-primary);
+}
+
 .menu-fab {
   position: fixed;
   top: max(16px, env(safe-area-inset-top));

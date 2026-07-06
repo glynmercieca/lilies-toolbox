@@ -5,9 +5,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { filter } from 'rxjs';
 
 import { APP_SETTINGS } from './core/app-settings';
+import { ThemeService } from './core/theme.service';
 import { ToolboxStateService } from './core/toolbox-state.service';
 
 @Component({
@@ -18,6 +20,7 @@ import { ToolboxStateService } from './core/toolbox-state.service';
     MatIconModule,
     MatProgressBarModule,
     MatSidenavModule,
+    MatSlideToggleModule,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -29,6 +32,7 @@ import { ToolboxStateService } from './core/toolbox-state.service';
 export class App {
   readonly state = inject(ToolboxStateService);
   readonly auth = this.state.auth;
+  readonly theme = inject(ThemeService);
   readonly loading = this.state.loading;
   readonly isSignedIn = computed(() => Boolean(this.auth.currentUser()));
   private readonly router = inject(Router);
@@ -67,6 +71,10 @@ export class App {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleTheme(): void {
+    this.theme.toggleMode();
   }
 
   private checkIsPublicRoute(url: string): boolean {
