@@ -17,13 +17,16 @@ concurrency:
 
 jobs:
   bump-version:
-    if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'chore: bump app version to ') }}"
     runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.version-plan.outputs.should-build }}
+      build-ref: ${{ steps.commit-bump.outputs.build-ref || steps.version-plan.outputs.build-ref }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -31,7 +34,32 @@ jobs:
           node-version: 22.22.3
           cache: npm
 
+      - name: Decide version flow
+        id: version-plan
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-build=true" >> "$GITHUB_OUTPUT"
+            echo "build-ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+            echo "should-build=false" >> "$GITHUB_OUTPUT"
+            echo "build-ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ github.event.head_commit.message }}" == chore:\ bump\ app\ version\ to\ * ]]; then
+            echo "should-build=false" >> "$GITHUB_OUTPUT"
+            echo "build-ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should-build=true" >> "$GITHUB_OUTPUT"
+
       - name: Bump app version
+        if: ${{ steps.version-plan.outputs.should-build == 'true' && github.event_name == 'push' }}
         id: bump-version
         shell: bash
         run: |
@@ -39,6 +67,8 @@ jobs:
           echo "value=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Commit bumped version
+        if: ${{ steps.version-plan.outputs.should-build == 'true' && github.event_name == 'push' }}
+        id: commit-bump
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -46,13 +76,18 @@ jobs:
           git add src/environments/environment.ts src/environments/environment.development.ts
           git commit -m "chore: bump app version to ${{ steps.bump-version.outputs.value }}"
           git push
+          echo "build-ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   build:
-    if: "${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore: bump app version to ')) }}"
+    if: ${{ needs.bump-version.outputs.should-build == 'true' }}
+    needs: bump-version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.bump-version.outputs.build-ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -87,8 +122,10 @@ jobs:
           path: dist/lilies-shed/browser
 
   deploy:
-    if: "${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore: bump app version to ')) }}"
-    needs: build
+    if: ${{ needs.bump-version.outputs.should-build == 'true' }}
+    needs:
+      - bump-version
+      - build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
