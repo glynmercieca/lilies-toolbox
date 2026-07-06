@@ -19,15 +19,16 @@
       </div>
       <div class="d-grid gap-2 flex-grow-1 align-content-start">
         <div class="theme-toggle-row">
-          <div class="theme-toggle-control">
-            <mat-icon class="theme-icon sun-icon">light_mode</mat-icon>
-            <mat-slide-toggle
-              [checked]="theme.mode() === 'dark'"
-              (change)="toggleTheme()"
-              aria-label="Toggle dark mode"
-            />
-            <mat-icon class="theme-icon moon-icon">dark_mode</mat-icon>
-          </div>
+          <button
+            mat-button
+            type="button"
+            class="theme-toggle-control"
+            [class.dark-mode-active]="theme.mode() === 'dark'"
+            (click)="toggleTheme()"
+            [attr.aria-label]="nextThemeLabel"
+          >
+            <mat-icon class="theme-toggle-action-icon">{{ nextThemeIcon }}</mat-icon>
+          </button>
         </div>
         <button mat-button type="button" (click)="requestTool()" class="justify-content-start">
           <mat-icon>campaign</mat-icon>

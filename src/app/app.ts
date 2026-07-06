@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { filter } from 'rxjs';
 
 import { APP_SETTINGS } from './core/app-settings';
@@ -20,7 +19,6 @@ import { ToolboxStateService } from './core/toolbox-state.service';
     MatIconModule,
     MatProgressBarModule,
     MatSidenavModule,
-    MatSlideToggleModule,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -80,6 +78,14 @@ export class App {
 
   toggleTheme(): void {
     this.theme.toggleMode();
+  }
+
+  get nextThemeIcon(): string {
+    return this.theme.mode() === 'dark' ? 'light_mode' : 'dark_mode';
+  }
+
+  get nextThemeLabel(): string {
+    return this.theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
   }
 
   private checkIsPublicRoute(url: string): boolean {
