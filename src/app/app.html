@@ -27,13 +27,13 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="m-0 fs-5">Notifications</h2>
       <button mat-icon-button type="button" (click)="closeNotifications()" aria-label="Close notifications">
-          <mat-icon class="material-symbols-outlined">close</mat-icon>
+        <mat-icon class="material-symbols-outlined">close</mat-icon>
       </button>
     </div>
 
     @if (state.recentNotifications().length) {
-      <div class="d-grid gap-2 align-content-start">
-        @for (notification of state.recentNotifications(); track notification.id) {
+    <div class="d-grid gap-2 align-content-start">
+      @for (notification of state.recentNotifications(); track notification.id) {
       <mat-card appearance="outlined" class="notification-card">
         <div class="fw-semibold">{{ notification.title }}</div>
         <p class="m-0 notification-message">{{ notification.message }}</p>
@@ -45,24 +45,17 @@
       }
     </div>
     } @else {
-      <div class="py-2 text-body-secondary">
-        No notifications yet.
-      </div>
+    <div class="py-2 text-body-secondary">
+      No notifications yet.
+    </div>
     }
   </mat-drawer>
   }
 
   <mat-drawer-content class="app-content">
-    <main
-      class="page-shell container-fluid"
-      [class.px-3]="!isHomeRoute()"
-      [class.px-md-4]="!isHomeRoute()"
-      [class.pt-3]="!isHomeRoute()"
-      [class.page-shell-with-bottom-nav]="isSignedIn()"
-      [class.page-shell-home]="isHomeRoute()"
-      (touchstart)="onShellTouchStart($event)"
-      (touchend)="onShellTouchEnd($event)"
-    >
+    <main class="page-shell" [class.pt-3]="!isHomeRoute()" [class.page-shell-with-bottom-nav]="isSignedIn()"
+      [class.page-shell-home]="isHomeRoute()" (touchstart)="onShellTouchStart($event)"
+      (touchend)="onShellTouchEnd($event)">
       <section class="d-grid" [class.container]="isSignedIn() && !isHomeRoute()" [class.content-shell]="!isHomeRoute()">
         <router-outlet></router-outlet>
       </section>
