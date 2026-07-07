@@ -109,40 +109,12 @@ async function notifyOwner(loan, eventType) {
 
   const tokens = readStringArray(owner.notificationTokens);
   if (!tokens.length) {
-    logger.info('Owner has no notification tokens.', { ownerId, toolId });
     return;
   }
-
-  logger.info('Sending owner notification.', {
-    eventType,
-    ownerId,
-    borrowerId,
-    toolId,
-    toolName,
-    tokenCount: tokens.length,
-  });
 
   const response = await messaging.sendEachForMulticast({
     ...notification,
     tokens,
-  });
-  logger.info('Owner notification send complete.', {
-    eventType,
-    ownerId,
-    toolId,
-    successCount: response.successCount,
-    failureCount: response.failureCount,
-    failures: response.responses
-      .map((result, index) =>
-        result.success
-          ? null
-          : {
-              tokenIndex: index,
-              errorCode: result.error?.code || 'unknown',
-              errorMessage: result.error?.message || 'Unknown messaging error',
-            },
-      )
-      .filter(Boolean),
   });
   const invalidTokens = [];
   response.responses.forEach((result, index) => {
@@ -225,14 +197,8 @@ async function notifyUsersOfToolRequest(toolRequest) {
 
   const tokens = [...tokenOwners.keys()];
   if (!tokens.length) {
-    logger.info('No user notification tokens found for tool request.');
     return;
   }
-
-  logger.info('Sending tool request notification broadcast.', {
-    requesterId,
-    tokenCount: tokens.length,
-  });
 
   const response = await messaging.sendEachForMulticast({
     tokens,
@@ -254,23 +220,6 @@ async function notifyUsersOfToolRequest(toolRequest) {
       },
     },
   });
-  logger.info('Tool request notification send complete.', {
-    requesterId,
-    successCount: response.successCount,
-    failureCount: response.failureCount,
-    failures: response.responses
-      .map((result, index) =>
-        result.success
-          ? null
-          : {
-              tokenIndex: index,
-              errorCode: result.error?.code || 'unknown',
-              errorMessage: result.error?.message || 'Unknown messaging error',
-            },
-      )
-      .filter(Boolean),
-  });
-
   const invalidTokensByUser = new Map();
   response.responses.forEach((result, index) => {
     if (!result.success && isInvalidTokenError(result.error?.code)) {

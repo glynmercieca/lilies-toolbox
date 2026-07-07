@@ -14,14 +14,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.info('[Lilies Shed SW] Background push received.', {
-    notification: payload.notification ?? null,
-    data: payload.data ?? null,
-    fcmOptions: payload.fcmOptions ?? null,
-  });
-
   if (payload.notification) {
-    console.info('[Lilies Shed SW] Skipping manual notification display because payload already includes a notification block.');
     return;
   }
 
@@ -34,12 +27,6 @@ messaging.onBackgroundMessage((payload) => {
     payload.data?.click_action ||
     '/shed';
 
-  console.info('[Lilies Shed SW] Showing notification.', {
-    title,
-    body,
-    link,
-  });
-
   self.registration.showNotification(title, {
     body,
     icon: payload.notification?.image || '/icons/icon-192x192.png',
@@ -48,10 +35,6 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-  console.info('[Lilies Shed SW] Notification clicked.', {
-    notificationData: event.notification?.data ?? null,
-  });
-
   event.notification?.close();
 
   const fallbackUrl = '/shed';
