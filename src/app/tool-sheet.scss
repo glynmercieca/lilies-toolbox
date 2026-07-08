@@ -33,10 +33,20 @@
 }
 
 .tool-sheet-image-frame {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
   background: var(--mat-sys-surface-container-low);
+}
+
+.tool-sheet-image-frame.is-previewable {
+  cursor: zoom-in;
+}
+
+.tool-sheet-image-frame.is-previewable:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mat-sys-primary) 44%, transparent);
+  outline-offset: 3px;
 }
 
 .tool-sheet-image {
@@ -44,6 +54,25 @@
   width: 100%;
   max-height: min(42vh, 360px);
   object-fit: contain;
+}
+
+.tool-availability {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #d9f7d8 88%, white);
+  color: #326b2f;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.tool-availability.unavailable {
+  background: color-mix(in srgb, #fde0e0 88%, white);
+  color: #a13636;
 }
 
 .tool-sheet-chips {
@@ -72,12 +101,4 @@
 
 .danger-button {
   color: var(--mat-sys-error);
-}
-
-.available-chip {
-  --mdc-chip-label-text-color: var(--mat-sys-primary);
-}
-
-.unavailable-chip {
-  --mdc-chip-label-text-color: var(--mat-sys-error);
 }

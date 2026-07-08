@@ -154,6 +154,17 @@ mat-chip mat-icon {
   background: rgba(198, 40, 40, 0.12) !important;
 }
 
+.tool-image-preview-dialog-panel {
+  max-width: 100vw !important;
+}
+
+.tool-image-preview-dialog-panel .mat-mdc-dialog-surface {
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .danger-flat-button:not(:disabled) {
   background: var(--mat-sys-error) !important;
   color: var(--mat-sys-on-error) !important;

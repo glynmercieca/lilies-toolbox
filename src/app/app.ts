@@ -1,5 +1,5 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { ChangeDetectionStrategy, Component, LOCALE_ID, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,14 +9,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { filter } from 'rxjs';
 
-import { FirebaseMessagingService } from './core/firebase-messaging.service';
+import { FirebaseMessagingService, OPEN_NOTIFICATIONS_MESSAGE } from './core/firebase-messaging.service';
 import { ToolboxStateService } from './core/toolbox-state.service';
 import { VersionCheckService } from './core/version-check.service';
 
 @Component({
   selector: 'app-root',
   imports: [
-    DatePipe,
     MatBadgeModule,
     MatButtonModule,
     MatCardModule,
@@ -31,10 +30,11 @@ import { VersionCheckService } from './core/version-check.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.scss',
 })
-export class App {
+export class App implements OnDestroy {
   private static readonly swipeRoutes = ['/shed', '/borrowed', '/my-tools', '/options'] as const;
   private static readonly swipeThresholdPx = 72;
   private static readonly swipeVerticalLimitPx = 48;
+  private static readonly relativeTimeLimitMs = 12 * 60 * 60 * 1000;
 
   readonly state = inject(ToolboxStateService);
   readonly auth = this.state.auth;
@@ -43,6 +43,7 @@ export class App {
   readonly isSignedIn = computed(() => Boolean(this.auth.currentUser()));
   private readonly router = inject(Router);
   private readonly versionCheck = inject(VersionCheckService);
+  private readonly locale = inject(LOCALE_ID);
   readonly isPublicRoute = signal(true);
   readonly isHomeRoute = signal(false);
   readonly notificationsOpen = signal(false);
@@ -50,6 +51,13 @@ export class App {
   private touchStartX: number | null = null;
   private touchStartY: number | null = null;
   private swipeBlocked = false;
+  private readonly clockInterval = window.setInterval(() => this.now.set(Date.now()), 60_000);
+  private readonly now = signal(Date.now());
+  private readonly serviceWorkerMessageHandler = (event: MessageEvent) => {
+    if (event.data?.type === OPEN_NOTIFICATIONS_MESSAGE) {
+      this.openNotifications();
+    }
+  };
 
   constructor() {
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
@@ -57,11 +65,24 @@ export class App {
       this.isHomeRoute.set(this.checkIsHomeRoute(this.router.url));
       this.headerRaised.set(false);
       this.closeDrawers();
+      this.openNotificationsFromUrl(this.router.url);
     });
     this.isPublicRoute.set(this.checkIsPublicRoute(this.router.url));
     this.isHomeRoute.set(this.checkIsHomeRoute(this.router.url));
+    this.openNotificationsFromUrl(this.router.url);
+    navigator.serviceWorker?.addEventListener('message', this.serviceWorkerMessageHandler);
+    effect(() => {
+      if (this.messaging.notificationOpenRequests() > 0) {
+        this.openNotifications();
+      }
+    });
     this.lockPortraitOrientation();
     this.versionCheck.start();
+  }
+
+  ngOnDestroy(): void {
+    window.clearInterval(this.clockInterval);
+    navigator.serviceWorker?.removeEventListener('message', this.serviceWorkerMessageHandler);
   }
 
   async signOut(): Promise<void> {
@@ -92,6 +113,26 @@ export class App {
     if (element instanceof HTMLElement) {
       this.headerRaised.set(element.scrollTop > 0);
     }
+  }
+
+  formatNotificationTime(value: string): string {
+    const timestamp = new Date(value).getTime();
+    if (Number.isNaN(timestamp)) {
+      return value;
+    }
+
+    const elapsedMs = this.now() - timestamp;
+    if (elapsedMs >= 0 && elapsedMs < App.relativeTimeLimitMs) {
+      const elapsedMinutes = Math.max(1, Math.floor(elapsedMs / 60_000));
+      if (elapsedMinutes < 60) {
+        return `${elapsedMinutes} ${elapsedMinutes === 1 ? 'minute' : 'minutes'} ago`;
+      }
+
+      const elapsedHours = Math.floor(elapsedMinutes / 60);
+      return `${elapsedHours} ${elapsedHours === 1 ? 'hour' : 'hours'} ago`;
+    }
+
+    return formatDate(value, 'short', this.locale);
   }
 
   onShellTouchStart(event: TouchEvent): void {
@@ -149,6 +190,14 @@ export class App {
   private checkIsHomeRoute(url: string): boolean {
     const [path] = url.split('?');
     return ['/home', '/'].includes(path || '/');
+  }
+
+  private openNotificationsFromUrl(url: string): void {
+    const [, query = ''] = url.split('?');
+    const searchParams = new URLSearchParams(query.split('#')[0]);
+    if (searchParams.get('notifications') === 'open') {
+      this.openNotifications();
+    }
   }
 
   private async lockPortraitOrientation(): Promise<void> {

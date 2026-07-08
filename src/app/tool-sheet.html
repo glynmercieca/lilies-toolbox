@@ -9,18 +9,18 @@
     </button>
   </div>
 
-  <div class="tool-sheet-image-frame">
+  <div class="tool-sheet-image-frame" [class.is-previewable]="canPreviewImage()" (click)="openImagePreview()"
+    (keydown.enter)="onPreviewKeyboard($event)" (keydown.space)="onPreviewKeyboard($event)"
+    [attr.role]="canPreviewImage() ? 'button' : null" [attr.tabindex]="canPreviewImage() ? 0 : null"
+    [attr.aria-label]="canPreviewImage() ? 'Open full screen image preview' : null">
     <img class="tool-sheet-image" [appResolvedSrc]="data.tool.image || ''" [alt]="data.tool.name"
       (error)="fallbackImage($event)" />
+    <div class="tool-availability" [class.unavailable]="!data.tool.available">
+      {{ data.tool.available ? 'Available' : 'Not available' }}
+    </div>
   </div>
 
   <mat-chip-set class="tool-sheet-chips">
-    <mat-chip [class.available-chip]="data.tool.available" [class.unavailable-chip]="!data.tool.available">
-      <mat-icon class="material-symbols-outlined" matChipAvatar>
-        {{ data.tool.available ? 'check_circle' : 'cancel' }}
-      </mat-icon>
-      {{ data.tool.available ? 'Available' : 'Not available' }}
-    </mat-chip>
     <mat-chip>
       <mat-icon class="material-symbols-outlined" matChipAvatar>person</mat-icon>
       {{ data.tool.ownerFirstName || 'Unknown owner' }}

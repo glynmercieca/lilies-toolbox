@@ -39,7 +39,7 @@
         <p class="m-0 notification-message">{{ notification.message }}</p>
         <div class="notification-meta">
           <span>{{ notification.actorFirstName }}</span>
-          <span>{{ notification.createdAt | date: 'short' }}</span>
+          <span>{{ formatNotificationTime(notification.createdAt) }}</span>
         </div>
       </mat-card>
       }
