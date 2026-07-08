@@ -63,25 +63,33 @@
 
     @if (isSignedIn()) {
     <nav class="bottom-nav">
-      <a mat-button class="text-decoration-none rounded-4" routerLink="/shed" routerLinkActive="active-nav"
+      <a mat-button class="bottom-nav-item text-decoration-none rounded-4" routerLink="/shed" routerLinkActive="active-nav"
         [routerLinkActiveOptions]="{ exact: true }">
-        <mat-icon class="material-symbols-outlined">warehouse</mat-icon>
-        <span class="bottom-nav-label">Shed</span>
+        <span class="bottom-nav-item-inner">
+          <mat-icon class="material-symbols-outlined">warehouse</mat-icon>
+          <span class="bottom-nav-label">Shed</span>
+        </span>
       </a>
-      <a mat-button class="text-decoration-none rounded-4" routerLink="/borrowed" routerLinkActive="active-nav"
+      <a mat-button class="bottom-nav-item text-decoration-none rounded-4" routerLink="/borrowed" routerLinkActive="active-nav"
         [routerLinkActiveOptions]="{ exact: true }">
-        <mat-icon class="material-symbols-outlined">hand_package</mat-icon>
-        <span class="bottom-nav-label">Borrowed</span>
+        <span class="bottom-nav-item-inner">
+          <mat-icon class="material-symbols-outlined">hand_package</mat-icon>
+          <span class="bottom-nav-label">Borrowed</span>
+        </span>
       </a>
-      <a mat-button class="text-decoration-none rounded-4" routerLink="/my-tools" routerLinkActive="active-nav"
+      <a mat-button class="bottom-nav-item text-decoration-none rounded-4" routerLink="/my-tools" routerLinkActive="active-nav"
         [routerLinkActiveOptions]="{ exact: true }">
-        <mat-icon class="material-symbols-outlined">handyman</mat-icon>
-        <span class="bottom-nav-label">My Tools</span>
+        <span class="bottom-nav-item-inner">
+          <mat-icon class="material-symbols-outlined">handyman</mat-icon>
+          <span class="bottom-nav-label">My Tools</span>
+        </span>
       </a>
-      <a mat-button class="text-decoration-none rounded-4" routerLink="/options" routerLinkActive="active-nav"
+      <a mat-button class="bottom-nav-item text-decoration-none rounded-4" routerLink="/options" routerLinkActive="active-nav"
         [routerLinkActiveOptions]="{ exact: true }">
-        <mat-icon class="material-symbols-outlined">action_key</mat-icon>
-        <span class="bottom-nav-label">Options</span>
+        <span class="bottom-nav-item-inner">
+          <mat-icon class="material-symbols-outlined">action_key</mat-icon>
+          <span class="bottom-nav-label">Options</span>
+        </span>
       </a>
     </nav>
 

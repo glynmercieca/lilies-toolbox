@@ -6,8 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
-import { fallbackImage, resolveToolImageUrl } from './core/image-url.util';
-import { ResolvedImageDirective } from './core/resolved-image.directive';
+import { ToolCardComponent } from './shed-tool-card';
 import { ToolboxStateService } from './core/toolbox-state.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -21,7 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatTooltipModule,
     MatIconModule,
     MatInputModule,
-    ResolvedImageDirective,
+    ToolCardComponent,
   ],
   templateUrl: './tools-view.html',
   styleUrl: './tools-view.scss',
@@ -30,8 +29,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export class ToolsViewComponent {
   readonly state = inject(ToolboxStateService);
   readonly searchFocused = signal(false);
-  protected readonly fallbackImage = fallbackImage;
-  protected readonly resolveToolImageUrl = resolveToolImageUrl;
 
   onSearchFocusIn(): void {
     this.searchFocused.set(true);
