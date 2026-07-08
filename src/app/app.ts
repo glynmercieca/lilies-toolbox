@@ -47,6 +47,7 @@ export class App implements OnDestroy {
   readonly isHomeRoute = signal(false);
   readonly notificationsOpen = signal(false);
   readonly headerRaised = signal(false);
+  private pendingNotificationsOpen = false;
   private readonly clockInterval = window.setInterval(() => this.now.set(Date.now()), 60_000);
   private readonly now = signal(Date.now());
   private readonly windowScrollHandler = () => this.updateHeaderRaised();
@@ -74,6 +75,12 @@ export class App implements OnDestroy {
         this.openNotifications();
       }
     });
+    effect(() => {
+      if (this.pendingNotificationsOpen && this.isSignedIn()) {
+        this.pendingNotificationsOpen = false;
+        this.openNotifications();
+      }
+    });
     this.lockPortraitOrientation();
     this.versionCheck.start();
   }
@@ -93,6 +100,11 @@ export class App implements OnDestroy {
   }
 
   openNotifications(): void {
+    if (!this.isSignedIn()) {
+      this.pendingNotificationsOpen = true;
+      return;
+    }
+
     this.notificationsOpen.set(true);
     this.state.startNotificationsLiveRefresh();
   }
@@ -148,6 +160,7 @@ export class App implements OnDestroy {
     const [, query = ''] = url.split('?');
     const searchParams = new URLSearchParams(query.split('#')[0]);
     if (searchParams.get('notifications') === 'open') {
+      this.pendingNotificationsOpen = true;
       this.openNotifications();
     }
   }

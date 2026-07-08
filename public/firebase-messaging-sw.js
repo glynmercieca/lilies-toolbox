@@ -56,6 +56,8 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification?.data ?? {};
   const targetUrl =
     notificationData.link ||
+    notificationData.FCM_MSG?.data?.link ||
+    notificationData.FCM_MSG?.data?.click_action ||
     notificationData.FCM_MSG?.notification?.click_action ||
     notificationData.FCM_MSG?.fcmOptions?.link ||
     fallbackUrl;
@@ -65,8 +67,15 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if ('focus' in client && client.url.startsWith(self.location.origin)) {
-          client.postMessage?.({ type: OPEN_NOTIFICATIONS_MESSAGE });
-          return client.focus();
+          const focusedClient = client.navigate
+            ? client.navigate(targetUrlWithNotificationState)
+            : client.focus();
+
+          return Promise.resolve(focusedClient).then((targetClient) => {
+            const activeClient = targetClient || client;
+            activeClient.postMessage?.({ type: OPEN_NOTIFICATIONS_MESSAGE });
+            return activeClient.focus?.();
+          });
         }
       }
 
