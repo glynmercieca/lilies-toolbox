@@ -1,11 +1,26 @@
 <h2 mat-dialog-title>{{ data.mode === 'add' ? 'Add tool' : 'Edit tool' }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="d-grid mt-2">
+  <form [formGroup]="form" class="d-grid gap-2">
+    <p class="m-0 text-body-secondary">
+      Fill in the details for the tool you want to add or edit.
+    </p>
     <mat-form-field appearance="outline" class="w-100">
       <mat-label>Name</mat-label>
       <input matInput formControlName="name" />
       @if (form.controls.name.invalid && form.controls.name.touched) {
       <mat-error>Name is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Category</mat-label>
+      <mat-select formControlName="categoryId" (openedChange)="onCategoryOpenedChange($event)">
+        @for (category of categories; track category.id) {
+        <mat-option [value]="category.id">{{ category.name }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.categoryId.invalid && form.controls.categoryId.touched) {
+      <mat-error>Category is required.</mat-error>
       }
     </mat-form-field>
 

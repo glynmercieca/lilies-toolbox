@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 
@@ -10,8 +12,10 @@ import { ToolCardComponent } from './tool-card';
 @Component({
   selector: 'app-shed-view',
   imports: [
+    MatAutocompleteModule,
     MatButtonModule,
     MatCardModule,
+    MatDividerModule,
     MatIconModule,
     MatMenuModule,
     ToolCardComponent,

@@ -22,6 +22,10 @@
 
   <mat-chip-set class="tool-sheet-chips">
     <mat-chip>
+      <mat-icon class="material-symbols-outlined" matChipAvatar>category</mat-icon>
+      {{ data.tool.categoryName }}
+    </mat-chip>
+    <mat-chip>
       <mat-icon class="material-symbols-outlined" matChipAvatar>person</mat-icon>
       {{ data.tool.ownerFirstName || 'Unknown owner' }}
     </mat-chip>
