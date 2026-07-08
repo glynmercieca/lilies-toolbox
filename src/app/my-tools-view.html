@@ -6,6 +6,9 @@
           <div class="tool-section-summary-label">Your inventory</div>
           <div class="tool-section-summary-value">{{ state.ownedTools().length }} listed tools</div>
         </div>
+        <button mat-icon-button type="button" (click)="openStats()" aria-label="Open my tools statistics">
+          <mat-icon class="material-symbols-outlined">pie_chart</mat-icon>
+        </button>
       </div>
     </mat-card-content>
   </mat-card>

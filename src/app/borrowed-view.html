@@ -4,8 +4,11 @@
       <div class="tool-section-summary-top">
         <div>
           <div class="tool-section-summary-label">Currently with you</div>
-          <div class="tool-section-summary-value">{{ state.borrowedTools().length }} borrowed tools</div>
+          <div class="tool-section-summary-value">{{ borrowedToolsSummary }}</div>
         </div>
+        <button mat-icon-button type="button" (click)="openStats()" aria-label="Open borrowed tools statistics">
+          <mat-icon class="material-symbols-outlined">pie_chart</mat-icon>
+        </button>
       </div>
     </mat-card-content>
   </mat-card>
