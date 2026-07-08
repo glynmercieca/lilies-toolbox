@@ -9,6 +9,7 @@ import { UserProfile } from './models';
 
 const TOKEN_STORAGE_KEY = 'lilies-shed.fcm-token';
 const MESSAGING_SW_URL = '/firebase-messaging-sw.js';
+const MESSAGING_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
 const FOREGROUND_MESSAGE_DURATION_MS = 8000;
 
 export interface ForegroundNotification {
@@ -63,6 +64,7 @@ export class FirebaseMessagingService {
     try {
       const messaging = getMessaging(this.firebase.app);
       const serviceWorkerRegistration = await this.registerServiceWorker();
+      await serviceWorkerRegistration.update();
       const token = await getToken(messaging, {
         vapidKey: APP_SETTINGS.firebaseVapidKey,
         serviceWorkerRegistration,
@@ -192,13 +194,18 @@ export class FirebaseMessagingService {
   private registerServiceWorker(): Promise<ServiceWorkerRegistration> {
     if (!this.serviceWorkerRegistrationPromise) {
       this.serviceWorkerRegistrationPromise = navigator.serviceWorker
-        .register(MESSAGING_SW_URL, {
-          scope: '/',
+        .getRegistration('/')
+        .then(async (rootRegistration) => {
+          if (rootRegistration?.active?.scriptURL.endsWith(MESSAGING_SW_URL)) {
+            await rootRegistration.unregister();
+          }
         })
-        .then(async (registration) => {
-          await navigator.serviceWorker.ready;
-          return registration;
-        });
+        .then(() =>
+          navigator.serviceWorker.register(MESSAGING_SW_URL, {
+            scope: MESSAGING_SW_SCOPE,
+          }),
+        )
+        .then((registration) => registration);
     }
 
     return this.serviceWorkerRegistrationPromise;

@@ -21,10 +21,14 @@ function withNotificationsOpenParam(value) {
       return value;
     }
 
+    if (url.pathname === '/' || url.pathname === '/home') {
+      url.pathname = '/shed';
+    }
+
     url.searchParams.set('notifications', 'open');
     return url.href;
   } catch {
-    return value;
+    return `${self.location.origin}/shed?notifications=open`;
   }
 }
 
