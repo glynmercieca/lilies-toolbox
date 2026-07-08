@@ -1,8 +1,8 @@
 <mat-card appearance="outlined" class="w-100 d-flex flex-column h-100 tool-card" role="button" tabindex="0"
   (click)="onView()" (keydown.enter)="onView()" (keydown.space)="onViewFromKeyboard($event)">
   <div class="tool-image-wrap">
-    <img class="w-100 tool-card-image" mat-card-image [appResolvedSrc]="tool().image || ''" [alt]="tool().name"
-      (error)="fallbackImage($event)" />
+    <img class="w-100 tool-card-image" mat-card-image loading="lazy" decoding="async" fetchpriority="low"
+      [appResolvedSrc]="tool().image || ''" [alt]="tool().name" (error)="fallbackImage($event)" />
     @if (showAvailabilityBadge()) {
     <div class="tool-availability" [class.unavailable]="!tool().available">
       {{ tool().available ? 'Available' : 'Not available' }}

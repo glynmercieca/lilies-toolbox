@@ -23,6 +23,7 @@ import { ToolFormDialogComponent } from '../tool-form-dialog';
 
 @Injectable({ providedIn: 'root' })
 export class ToolboxStateService {
+  private readonly listPageSize = 18;
   private readonly bottomSheet = inject(MatBottomSheet);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -36,6 +37,9 @@ export class ToolboxStateService {
   readonly searchTerm = signal('');
   readonly showUnavailableTools = signal(false);
   readonly savingToolId = signal<string | null>(null);
+  readonly shedVisibleCount = signal(this.listPageSize);
+  readonly borrowedVisibleCount = signal(this.listPageSize);
+  readonly ownedVisibleCount = signal(this.listPageSize);
   private readonly snapshot = signal<SheetsSnapshot>({ tools: [], loans: [], notifications: [] });
   private readonly loadedUserEmail = signal<string | null>(null);
   private notificationsSubscription: Unsubscribe | null = null;
@@ -63,6 +67,12 @@ export class ToolboxStateService {
     ),
   );
   readonly ownedTools = computed(() => this.visibleTools().filter((tool) => matchesUserId(this.auth.currentUser(), tool.ownerId)));
+  readonly pagedFilteredTools = computed(() => this.filteredTools().slice(0, this.shedVisibleCount()));
+  readonly pagedBorrowedTools = computed(() => this.borrowedTools().slice(0, this.borrowedVisibleCount()));
+  readonly pagedOwnedTools = computed(() => this.ownedTools().slice(0, this.ownedVisibleCount()));
+  readonly hasMoreFilteredTools = computed(() => this.pagedFilteredTools().length < this.filteredTools().length);
+  readonly hasMoreBorrowedTools = computed(() => this.pagedBorrowedTools().length < this.borrowedTools().length);
+  readonly hasMoreOwnedTools = computed(() => this.pagedOwnedTools().length < this.ownedTools().length);
   readonly recentNotifications = computed(() =>
     this.snapshot()
       .notifications.filter((notification) => !notification.recipientId || matchesUserId(this.auth.currentUser(), notification.recipientId))
@@ -128,10 +138,24 @@ export class ToolboxStateService {
 
   setSearchTerm(value: string): void {
     this.searchTerm.set(value);
+    this.resetShedPaging();
   }
 
   toggleUnavailableTools(): void {
     this.showUnavailableTools.update((value) => !value);
+    this.resetShedPaging();
+  }
+
+  showMoreFilteredTools(): void {
+    this.shedVisibleCount.update((count) => count + this.listPageSize);
+  }
+
+  showMoreBorrowedTools(): void {
+    this.borrowedVisibleCount.update((count) => count + this.listPageSize);
+  }
+
+  showMoreOwnedTools(): void {
+    this.ownedVisibleCount.update((count) => count + this.listPageSize);
   }
 
   async refresh(): Promise<void> {
@@ -143,6 +167,7 @@ export class ToolboxStateService {
     try {
       const snapshot = await this.toolbox.loadSnapshot();
       this.snapshot.set(snapshot);
+      this.resetListPaging();
     } catch (error) {
       this.notify(error instanceof Error ? error.message : 'Unable to refresh toolbox data.');
     } finally {
@@ -487,5 +512,15 @@ export class ToolboxStateService {
 
   private notify(message: string): void {
     this.snackBar.open(message, 'Close', { duration: 4000 });
+  }
+
+  private resetShedPaging(): void {
+    this.shedVisibleCount.set(this.listPageSize);
+  }
+
+  private resetListPaging(): void {
+    this.resetShedPaging();
+    this.borrowedVisibleCount.set(this.listPageSize);
+    this.ownedVisibleCount.set(this.listPageSize);
   }
 }

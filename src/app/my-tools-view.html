@@ -14,7 +14,7 @@
   </mat-card>
 
   <div class="row row-cols-2 row-cols-lg-3 g-3 tool-section-grid">
-    @for (tool of state.ownedTools(); track tool.id) {
+    @for (tool of state.pagedOwnedTools(); track tool.id) {
     <div class="col d-flex">
       <app-tool-card class="w-100" mode="my-tools" [tool]="tool" (view)="state.openTool($event, 'my-tools')" />
     </div>
@@ -29,6 +29,15 @@
     </div>
     }
   </div>
+
+  @if (state.hasMoreOwnedTools()) {
+  <div class="tool-section-pager">
+    <button mat-stroked-button type="button" (click)="state.showMoreOwnedTools()">
+      <mat-icon class="material-symbols-outlined">expand_more</mat-icon>
+      <span>Load more tools</span>
+    </button>
+  </div>
+  }
 
   <button mat-fab type="button" class="add-tool-fab" (click)="state.addTool()" aria-label="Add tool">
     <mat-icon class="material-symbols-outlined">add</mat-icon>

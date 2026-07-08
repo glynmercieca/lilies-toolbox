@@ -208,6 +208,15 @@ mat-chip mat-icon {
   --bs-gutter-y: 0.875rem;
 }
 
+.tool-section-pager {
+  display: flex;
+  justify-content: center;
+}
+
+.tool-section-pager button {
+  min-width: min(100%, 220px);
+}
+
 @media (max-width: 599.98px) {
   .tool-section-grid {
     --bs-gutter-x: 0.65rem;

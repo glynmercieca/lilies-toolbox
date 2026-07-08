@@ -14,7 +14,7 @@
   </mat-card>
 
   <div class="row row-cols-2 row-cols-lg-3 g-3 tool-section-grid">
-    @for (tool of state.borrowedTools(); track tool.id) {
+    @for (tool of state.pagedBorrowedTools(); track tool.id) {
     <div class="col d-flex">
       <app-tool-card class="w-100" mode="borrowed" [tool]="tool" (view)="state.openTool($event, 'borrowed')" />
     </div>
@@ -31,4 +31,13 @@
     </div>
     }
   </div>
+
+  @if (state.hasMoreBorrowedTools()) {
+  <div class="tool-section-pager">
+    <button mat-stroked-button type="button" (click)="state.showMoreBorrowedTools()">
+      <mat-icon class="material-symbols-outlined">expand_more</mat-icon>
+      <span>Load more tools</span>
+    </button>
+  </div>
+  }
 </section>
