@@ -13,6 +13,7 @@ import { FirebaseMessagingService, OPEN_NOTIFICATIONS_MESSAGE } from './core/fir
 import { ThemeService } from './core/theme.service';
 import { ToolboxStateService } from './core/toolbox-state.service';
 import { VersionCheckService } from './core/version-check.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,7 @@ import { VersionCheckService } from './core/version-check.service';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressBarModule,
     MatSidenavModule,
     RouterLink,
@@ -101,6 +103,10 @@ export class App implements OnDestroy {
 
   markNotificationRead(notificationId: string): void {
     void this.state.markNotificationRead(notificationId);
+  }
+
+  markUnreadNotificationsRead(): void {
+    void this.state.markUnreadNotificationsRead();
   }
 
   openNotifications(): void {

@@ -11,8 +11,9 @@ import { FirebaseMessagingService } from './firebase-messaging.service';
 import { FirestoreToolboxService, FIXED_TOOL_CATEGORIES } from './firestore-toolbox.service';
 import { ImageUploadService } from './image-upload.service';
 import { APP_SETTINGS } from './app-settings';
+import { CategoryDiscoveryService } from './category-discovery.service';
 import { matchesUserId } from './identity.util';
-import { SheetsSnapshot, ToolWithStatus } from './models';
+import { SheetsSnapshot, ToolCategoryRecord, ToolWithStatus } from './models';
 import { decorateTools } from './tool-status.util';
 import { DeleteToolDialogComponent } from '../delete-tool-dialog';
 import { NotificationOptInDialogComponent } from '../notification-opt-in-dialog';
@@ -24,6 +25,10 @@ import { ToolFormDialogComponent } from '../tool-form-dialog';
 
 type ToolSortMode = 'name' | 'date-added';
 
+const CATEGORY_DISCOVERY_ADMIN_USER_ID = 'R01SeK0oBJPFVBt0Okm12BnLxgs2';
+const CATEGORY_DISCOVERY_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+const CATEGORY_DISCOVERY_STORAGE_KEY = 'lilies-shed.last-category-discovery-at';
+
 @Injectable({ providedIn: 'root' })
 export class ToolboxStateService {
   private readonly listPageSize = 18;
@@ -31,6 +36,7 @@ export class ToolboxStateService {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly toolbox = inject(FirestoreToolboxService);
+  private readonly categoryDiscovery = inject(CategoryDiscoveryService);
   private readonly messaging = inject(FirebaseMessagingService);
   private readonly imageUpload = inject(ImageUploadService);
   private readonly router = inject(Router);
@@ -42,6 +48,7 @@ export class ToolboxStateService {
   readonly showUnavailableTools = signal(false);
   readonly toolSortMode = signal<ToolSortMode>('date-added');
   readonly savingToolId = signal<string | null>(null);
+  readonly categoryDiscoveryRunning = signal(false);
   readonly shedVisibleCount = signal(this.listPageSize);
   readonly borrowedVisibleCount = signal(this.listPageSize);
   readonly ownedVisibleCount = signal(this.listPageSize);
@@ -117,6 +124,7 @@ export class ToolboxStateService {
   readonly hasMoreFilteredTools = computed(() => this.pagedFilteredTools().length < this.filteredTools().length);
   readonly hasMoreBorrowedTools = computed(() => this.pagedBorrowedTools().length < this.borrowedTools().length);
   readonly hasMoreOwnedTools = computed(() => this.pagedOwnedTools().length < this.ownedTools().length);
+  readonly canRunCategoryDiscovery = computed(() => this.auth.currentUser()?.id === CATEGORY_DISCOVERY_ADMIN_USER_ID);
   readonly recentNotifications = computed(() =>
     this.snapshot()
       .notifications.filter((notification) => !notification.recipientId || matchesUserId(this.auth.currentUser(), notification.recipientId))
@@ -251,6 +259,7 @@ export class ToolboxStateService {
       this.snapshot.set(snapshot);
       this.readNotificationIds.set(readNotificationIds);
       this.resetListPaging();
+      void this.runWeeklyCategoryDiscovery();
     } catch (error) {
       this.notify(error instanceof Error ? error.message : 'Unable to refresh toolbox data.');
     } finally {
@@ -314,6 +323,44 @@ export class ToolboxStateService {
     }
   }
 
+  async markUnreadNotificationsRead(): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return;
+    }
+
+    const readNotificationIds = this.readNotificationIds();
+    const unreadNotificationIds = this.snapshot()
+      .notifications.filter(
+        (notification) =>
+          (!notification.recipientId || matchesUserId(user, notification.recipientId)) &&
+          !readNotificationIds.has(notification.id),
+      )
+      .map((notification) => notification.id);
+
+    if (!unreadNotificationIds.length) {
+      return;
+    }
+
+    this.readNotificationIds.update(
+      (currentReadNotificationIds) => new Set([...currentReadNotificationIds, ...unreadNotificationIds]),
+    );
+    try {
+      await this.toolbox.markNotificationsRead(user.id, unreadNotificationIds);
+    } catch (error) {
+      this.readNotificationIds.update((currentReadNotificationIds) => {
+        const nextReadNotificationIds = new Set(currentReadNotificationIds);
+        unreadNotificationIds.forEach((notificationId) => nextReadNotificationIds.delete(notificationId));
+        return nextReadNotificationIds;
+      });
+      this.notify(error instanceof Error ? error.message : 'Unable to mark notifications as read.');
+    }
+  }
+
+  async runCategoryDiscovery(): Promise<void> {
+    await this.discoverAndSaveCategories({ manual: true });
+  }
+
   async openTool(tool: ToolWithStatus, mode: ToolSheetMode = 'shed'): Promise<void> {
     await this.router.navigate([], {
       queryParams: {
@@ -333,6 +380,7 @@ export class ToolboxStateService {
     const sheetRef = this.bottomSheet.open<ToolSheetComponent, unknown, void>(
       ToolSheetComponent,
       {
+        closeOnNavigation: false,
         data: {
           actionRequested,
           mode,
@@ -474,6 +522,7 @@ export class ToolboxStateService {
     }
 
     const dialogRef = this.dialog.open(ToolFormDialogComponent, {
+      closeOnNavigation: false,
       data: { categories: this.categories(), mode: 'add' },
       maxWidth: '640px',
       width: 'min(92vw, 640px)',
@@ -633,6 +682,7 @@ export class ToolboxStateService {
     }
 
     const dialogRef = this.dialog.open(RequestToolDialogComponent, {
+      closeOnNavigation: false,
       maxWidth: '560px',
       width: 'min(92vw, 560px)',
     });
@@ -712,6 +762,68 @@ export class ToolboxStateService {
 
   private notify(message: string): void {
     this.snackBar.open(message, 'Close', { duration: 4000 });
+  }
+
+  private async runWeeklyCategoryDiscovery(): Promise<void> {
+    const lastRunAt = Number(window.localStorage.getItem(CATEGORY_DISCOVERY_STORAGE_KEY) ?? 0);
+    if (Number.isFinite(lastRunAt) && Date.now() - lastRunAt < CATEGORY_DISCOVERY_INTERVAL_MS) {
+      return;
+    }
+
+    await this.discoverAndSaveCategories({ manual: false });
+  }
+
+  private async discoverAndSaveCategories(options: { manual: boolean }): Promise<void> {
+    if (this.categoryDiscoveryRunning()) {
+      return;
+    }
+
+    this.categoryDiscoveryRunning.set(true);
+    if (options.manual) {
+      this.notify('Scanning tools for new categories...');
+    }
+
+    try {
+      const snapshot = this.snapshot();
+      const discoveredCategories = this.categoryDiscovery.discoverCategories(snapshot.tools, snapshot.categories);
+      if (!discoveredCategories.length) {
+        if (options.manual) {
+          this.notify('No new categories found.');
+        }
+        window.localStorage.setItem(CATEGORY_DISCOVERY_STORAGE_KEY, String(Date.now()));
+        return;
+      }
+
+      await this.toolbox.saveDiscoveredCategories(discoveredCategories);
+      this.snapshot.update((currentSnapshot) => ({
+        ...currentSnapshot,
+        categories: this.mergeCategories(currentSnapshot.categories, discoveredCategories),
+      }));
+      window.localStorage.setItem(CATEGORY_DISCOVERY_STORAGE_KEY, String(Date.now()));
+      if (options.manual) {
+        this.notify(`Added ${discoveredCategories.length} ${discoveredCategories.length === 1 ? 'category' : 'categories'}.`);
+      }
+    } catch (error) {
+      if (options.manual) {
+        const message = error instanceof Error ? error.message : '';
+        this.notify(
+          message.toLowerCase().includes('permission')
+            ? 'Category discovery needs updated Firestore rules deployed.'
+            : message || 'Unable to discover new categories.',
+        );
+      }
+    } finally {
+      this.categoryDiscoveryRunning.set(false);
+    }
+  }
+
+  private mergeCategories(
+    currentCategories: ToolCategoryRecord[],
+    discoveredCategories: ToolCategoryRecord[],
+  ): ToolCategoryRecord[] {
+    const categoriesById = new Map(currentCategories.map((category) => [category.id, category]));
+    discoveredCategories.forEach((category) => categoriesById.set(category.id, category));
+    return [...categoriesById.values()].sort((firstCategory, secondCategory) => firstCategory.order - secondCategory.order);
   }
 
   private resetShedPaging(): void {
@@ -801,6 +913,7 @@ export class ToolboxStateService {
 
     const dialogRef = this.dialog.open(ToolImagePreviewDialogComponent, {
       autoFocus: false,
+      closeOnNavigation: false,
       data: {
         alt: tool.name,
         image: tool.image,

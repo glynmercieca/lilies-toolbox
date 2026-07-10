@@ -6,7 +6,7 @@
           <div class="tool-section-summary-label">Currently with you</div>
           <div class="tool-section-summary-value">{{ borrowedToolsSummary }}</div>
         </div>
-        <button mat-icon-button type="button" (click)="openStats()" aria-label="Open borrowed tools statistics">
+        <button mat-icon-button type="button" matTooltip="Statistics" matTooltipPosition="left" (click)="openStats()" aria-label="Open borrowed tools statistics">
           <mat-icon class="material-symbols-outlined">pie_chart</mat-icon>
         </button>
       </div>
@@ -19,15 +19,14 @@
       <app-tool-card class="w-100" mode="borrowed" [tool]="tool" (view)="state.openTool($event, 'borrowed')" />
     </div>
     } @empty {
-    <div class="col-12">
-      <mat-card appearance="outlined">
-        <mat-card-content class="flex-grow-1">
-          <p class="m-0 fs-5">No borrowed tools right now.</p>
-          <p class="m-0 mt-3 text-body-secondary">
-            Borrowed items will appear here while they are checked out to you.
-          </p>
-        </mat-card-content>
-      </mat-card>
+    <div class="col-12 empty-state-column">
+      <div class="empty-state">
+        <div class="empty-state-art" aria-hidden="true">
+          <mat-icon class="material-symbols-outlined">hand_package</mat-icon>
+        </div>
+        <p class="empty-state-title">No borrowed tools right now</p>
+        <p class="empty-state-message">Borrowed items will appear here while they are checked out to you.</p>
+      </div>
     </div>
     }
   </div>

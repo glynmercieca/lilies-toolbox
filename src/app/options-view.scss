@@ -49,13 +49,13 @@
   border-color: var(--mat-sys-outline-variant);
 }
 
-.options-row.list-group-item-action:not(.active):hover,
-.options-row.list-group-item-action:not(.active):focus {
+.options-row:not(.options-row-static):hover,
+.options-row:not(.options-row-static):focus {
   color: inherit;
   background: color-mix(in srgb, var(--mat-sys-secondary-container) 48%, var(--mat-sys-surface));
 }
 
-.options-row.list-group-item-action:not(.active):active {
+.options-row:not(.options-row-static):active {
   color: inherit;
   background: color-mix(in srgb, var(--mat-sys-secondary-container) 72%, var(--mat-sys-surface));
 }

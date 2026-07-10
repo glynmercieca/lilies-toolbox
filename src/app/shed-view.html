@@ -58,12 +58,14 @@
       <app-tool-card class="w-100" mode="shed" [tool]="tool" (view)="state.openTool($event, 'shed')" />
     </div>
     } @empty {
-    <div class="col-12">
-      <mat-card appearance="outlined">
-        <mat-card-content class="flex-grow-1">
-          <p class="m-0">No tools match your current filters right now.</p>
-        </mat-card-content>
-      </mat-card>
+    <div class="col-12 empty-state-column">
+      <div class="empty-state">
+        <div class="empty-state-art" aria-hidden="true">
+          <mat-icon class="material-symbols-outlined">manage_search</mat-icon>
+        </div>
+        <p class="empty-state-title">No matching tools</p>
+        <p class="empty-state-message">Try another search or category filter.</p>
+      </div>
     </div>
     }
   </div>

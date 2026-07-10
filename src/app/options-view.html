@@ -49,7 +49,7 @@
       <h2 class="options-group-title m-0">Actions</h2>
       <mat-card appearance="outlined">
         <div class="list-group list-group-flush options-action-list">
-          <button type="button" class="list-group-item list-group-item-action options-row"
+          <button type="button" class="list-group-item options-row"
             (click)="requestTool()">
             <span class="d-grid gap-1">
               <span class="fw-semibold text-start">Request a tool</span>
@@ -58,16 +58,18 @@
             <mat-icon class="material-symbols-outlined">chevron_right</mat-icon>
           </button>
 
-          <button type="button" class="list-group-item list-group-item-action options-row" (click)="refresh()"
-            [disabled]="isRefreshing()">
+          @if (canRunCategoryDiscovery()) {
+          <button type="button" class="list-group-item options-row" (click)="runCategoryDiscovery()"
+            [disabled]="categoryDiscoveryRunning()">
             <span class="d-grid gap-1">
-              <span class="fw-semibold text-start">Reload app</span>
-              <span class="text-body-secondary text-start">Refresh data and sync</span>
+              <span class="fw-semibold text-start">Discover categories</span>
+              <span class="text-body-secondary text-start">Scan tool names and save new categories</span>
             </span>
             <mat-icon class="material-symbols-outlined">chevron_right</mat-icon>
           </button>
+          }
 
-          <button type="button" class="list-group-item list-group-item-action options-row options-row-danger"
+          <button type="button" class="list-group-item options-row options-row-danger"
             (click)="signOut()">
             <span class="d-grid gap-1">
               <span class="fw-semibold text-start">Sign out</span>
@@ -88,7 +90,7 @@
             <span class="text-body-secondary">{{ version }}</span>
           </div>
 
-          <a routerLink="/privacy" class="list-group-item list-group-item-action options-row text-decoration-none">
+          <a routerLink="/privacy" class="list-group-item options-row text-decoration-none">
             <span class="fw-semibold">Privacy policy</span>
             <mat-icon class="material-symbols-outlined">chevron_right</mat-icon>
           </a>

@@ -48,10 +48,20 @@
       }
     </div>
     } @else {
-    <div class="py-2 text-body-secondary">
-      No notifications yet.
+    <div class="empty-state empty-state-drawer">
+      <div class="empty-state-art" aria-hidden="true">
+        <mat-icon class="material-symbols-outlined">notifications_off</mat-icon>
+      </div>
+      <p class="empty-state-title">No notifications yet</p>
+      <p class="empty-state-message">Requests and returns will appear here.</p>
     </div>
     }
+
+    <button mat-icon-button type="button" class="notification-mark-read-action"
+      [disabled]="state.unreadNotificationCount() === 0" (click)="markUnreadNotificationsRead()"
+      aria-label="Mark notifications as read" matTooltip="Mark all as read" matTooltipPosition="right">
+      <mat-icon class="material-symbols-outlined">done_all</mat-icon>
+    </button>
   </mat-drawer>
   }
 

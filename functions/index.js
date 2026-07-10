@@ -11,6 +11,7 @@ const messaging = getMessaging();
 const FUNCTION_REGION = 'europe-west1';
 const APP_LINK = process.env.APP_LINK || 'https://shed.lilies.world/my-tools';
 const APP_ICON = process.env.APP_ICON || 'https://shed.lilies.world/notification-icon.png';
+const APP_NOTIFICATION_LINK = withNotificationsOpenParam(APP_LINK);
 
 exports.notifyOwnerOnBorrow = onDocumentCreated(
   {
@@ -205,7 +206,7 @@ async function notifyUsersOfToolRequest(toolRequest) {
   const response = await messaging.sendEachForMulticast({
     tokens,
     data: {
-      link: APP_LINK,
+      link: APP_NOTIFICATION_LINK,
     },
     notification: {
       title: 'Tool Request',
@@ -218,7 +219,7 @@ async function notifyUsersOfToolRequest(toolRequest) {
         icon: APP_ICON,
       },
       fcmOptions: {
-        link: APP_LINK,
+        link: APP_NOTIFICATION_LINK,
       },
     },
   });
@@ -255,7 +256,7 @@ function buildNotificationPayload(toolName, borrowerName, eventType) {
 
   return {
     data: {
-      link: APP_LINK,
+      link: APP_NOTIFICATION_LINK,
     },
     notification: {
       title,
@@ -268,10 +269,20 @@ function buildNotificationPayload(toolName, borrowerName, eventType) {
         icon: APP_ICON,
       },
       fcmOptions: {
-        link: APP_LINK,
+        link: APP_NOTIFICATION_LINK,
       },
     },
   };
+}
+
+function withNotificationsOpenParam(value) {
+  try {
+    const url = new URL(value);
+    url.searchParams.set('notifications', 'open');
+    return url.href;
+  } catch {
+    return 'https://shed.lilies.world/shed?notifications=open';
+  }
 }
 
 function firstNameFromDisplay(value) {

@@ -11,6 +11,7 @@ import { BorrowedStatSheetComponent } from './borrowed-stat-sheet';
 import { ToolboxStateService } from './core/toolbox-state.service';
 import { ViewportSentinelDirective } from './core/viewport-sentinel.directive';
 import { ToolCardComponent } from './tool-card';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-borrowed-view',
@@ -19,6 +20,7 @@ import { ToolCardComponent } from './tool-card';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     ToolCardComponent,
     ViewportSentinelDirective,
@@ -60,6 +62,7 @@ export class BorrowedViewComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.routeSubscription.unsubscribe();
+    this.activeStatsSheetRef?.dismiss();
   }
 
   private openStatsSheet(): void {
@@ -68,6 +71,7 @@ export class BorrowedViewComponent implements OnDestroy {
     }
 
     const sheetRef = this.bottomSheet.open(BorrowedStatSheetComponent, {
+      closeOnNavigation: false,
       data: {
         tools: this.state.borrowedTools(),
       },

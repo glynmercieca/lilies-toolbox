@@ -11,6 +11,7 @@ import { ToolboxStateService } from './core/toolbox-state.service';
 import { ViewportSentinelDirective } from './core/viewport-sentinel.directive';
 import { MyToolsStatSheetComponent, MyToolsStatSheetData } from './my-tools-stat-sheet';
 import { ToolCardComponent } from './tool-card';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-my-tools-view',
@@ -19,6 +20,7 @@ import { ToolCardComponent } from './tool-card';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     ToolCardComponent,
     ViewportSentinelDirective,
@@ -56,6 +58,7 @@ export class MyToolsView implements OnDestroy {
 
   ngOnDestroy(): void {
     this.routeSubscription.unsubscribe();
+    this.activeStatsSheetRef?.dismiss();
   }
 
   private openStatsSheet(): void {
@@ -66,6 +69,7 @@ export class MyToolsView implements OnDestroy {
     const data = this.createStatsData();
     const sheetRef = this.bottomSheet.open(MyToolsStatSheetComponent, {
       autoFocus: false,
+      closeOnNavigation: false,
       data,
       panelClass: 'rounded-bottom-sheet-panel',
       restoreFocus: false,
@@ -93,6 +97,7 @@ export class MyToolsView implements OnDestroy {
       .map((tool) => ({
         borrowerFirstName: tool.activeLoan?.borrowerFirstName ?? '',
         id: tool.id,
+        loanDate: tool.activeLoan?.loanDate ?? '',
         name: this.formatToolTitle(tool.name),
       }));
     const totalTools = tools.length;

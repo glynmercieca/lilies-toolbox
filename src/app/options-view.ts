@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -20,7 +20,8 @@ import { ToolboxStateService } from './core/toolbox-state.service';
 export class OptionsViewComponent {
   readonly state = inject(ToolboxStateService);
   readonly theme = inject(ThemeService);
-  readonly isRefreshing = computed(() => this.state.loading());
+  readonly canRunCategoryDiscovery = this.state.canRunCategoryDiscovery;
+  readonly categoryDiscoveryRunning = this.state.categoryDiscoveryRunning;
   readonly notificationsEnabled = signal(Notification.permission === 'granted');
 
   get version(): string {
@@ -40,8 +41,8 @@ export class OptionsViewComponent {
     this.notificationsEnabled.set(Notification.permission === 'granted');
   }
 
-  async refresh(): Promise<void> {
-    await this.state.refresh();
+  async runCategoryDiscovery(): Promise<void> {
+    await this.state.runCategoryDiscovery();
   }
 
   async signOut(): Promise<void> {

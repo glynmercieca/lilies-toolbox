@@ -6,7 +6,7 @@
           <div class="tool-section-summary-label">Your inventory</div>
           <div class="tool-section-summary-value">{{ state.ownedTools().length }} listed tools</div>
         </div>
-        <button mat-icon-button type="button" (click)="openStats()" aria-label="Open my tools statistics">
+        <button mat-icon-button type="button" matTooltip="Statistics" matTooltipPosition="left" (click)="openStats()" aria-label="Open my tools statistics">
           <mat-icon class="material-symbols-outlined">pie_chart</mat-icon>
         </button>
       </div>
@@ -19,13 +19,14 @@
       <app-tool-card class="w-100" mode="my-tools" [tool]="tool" (view)="state.openTool($event, 'my-tools')" />
     </div>
     } @empty {
-    <div class="col-12">
-      <mat-card appearance="outlined">
-        <mat-card-content class="flex-grow-1">
-          <p class="m-0">You have not added any tools yet.</p>
-          <p class="m-0 mt-3">Use the add button to create your first listing.</p>
-        </mat-card-content>
-      </mat-card>
+    <div class="col-12 empty-state-column">
+      <div class="empty-state">
+        <div class="empty-state-art" aria-hidden="true">
+          <mat-icon class="material-symbols-outlined">home_repair_service</mat-icon>
+        </div>
+        <p class="empty-state-title">No tools listed yet</p>
+        <p class="empty-state-message">Use the add button to create your first listing.</p>
+      </div>
     </div>
     }
   </div>

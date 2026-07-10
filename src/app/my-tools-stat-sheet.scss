@@ -119,13 +119,22 @@
   white-space: nowrap;
 }
 
-.my-tools-stat-sheet-borrower {
+.my-tools-stat-sheet-borrowed-meta {
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  max-width: 62%;
+}
+
+.my-tools-stat-sheet-chip {
+  display: inline-flex;
+  flex: 0 1 auto;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   min-height: 28px;
-  max-width: 44%;
   padding: 3px 9px;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 999px;
@@ -133,7 +142,13 @@
   font-size: 0.78rem;
 }
 
-.my-tools-stat-sheet-borrower mat-icon {
+.my-tools-stat-sheet-chip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-tools-stat-sheet-chip mat-icon {
   flex: 0 0 auto;
   font-size: 1rem;
   width: 1rem;

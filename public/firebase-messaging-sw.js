@@ -56,7 +56,7 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification?.close();
 
-  const fallbackUrl = '/shed';
+  const fallbackUrl = '/shed?notifications=open';
   const notificationData = event.notification?.data ?? {};
   const targetUrl =
     notificationData.link ||

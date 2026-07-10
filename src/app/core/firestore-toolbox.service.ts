@@ -135,10 +135,18 @@ export class FirestoreToolboxService {
   }
 
   async markNotificationRead(userId: string, notificationId: string): Promise<void> {
+    await this.markNotificationsRead(userId, [notificationId]);
+  }
+
+  async markNotificationsRead(userId: string, notificationIds: string[]): Promise<void> {
+    if (!notificationIds.length) {
+      return;
+    }
+
     await setDoc(
       doc(this.firebase.firestore, 'users', userId),
       {
-        readNotificationIds: arrayUnion(notificationId),
+        readNotificationIds: arrayUnion(...notificationIds),
         updatedAt: serverTimestamp(),
       },
       { merge: true },
@@ -209,6 +217,27 @@ export class FirestoreToolboxService {
       requesterId: requester.id,
       createdAt: serverTimestamp(),
     });
+  }
+
+  async saveDiscoveredCategories(categories: ToolCategoryRecord[]): Promise<void> {
+    if (!categories.length) {
+      return;
+    }
+
+    await Promise.all(
+      categories.map((category) =>
+        setDoc(
+          doc(this.firebase.firestore, 'categories', category.id),
+          {
+            id: category.id,
+            name: category.name,
+            order: category.order,
+            discoveredAt: serverTimestamp(),
+          },
+          { merge: false },
+        ),
+      ),
+    );
   }
 
   private parseTool(id: string, data: DocumentData, usersById: Map<string, UserProfile>): ToolRecord | null {

@@ -139,6 +139,19 @@ mat-chip mat-icon {
   color: var(--mat-sys-on-primary);
 }
 
+.notification-card-unread {
+  border-left: 5px solid var(--mat-sys-primary-container) !important;
+}
+
+.notification-mark-read-action {
+  position: fixed !important;
+  right: calc(min(280px, 80vw) - 64px);
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  background: var(--mat-sys-primary-container) !important;
+  color: var(--mat-sys-on-primary-container) !important;
+  z-index: 1;
+}
+
 .available-chip {
   background: rgba(46, 125, 50, 0.12) !important;
 }
@@ -236,7 +249,66 @@ mat-chip mat-icon {
   padding-block: 8px;
 }
 
+.empty-state-column {
+  display: grid;
+  flex: 0 0 100%;
+  min-height: min(50vh, 420px);
+  max-width: 100%;
+  place-items: center;
+  width: 100%;
+}
+
+.empty-state {
+  display: grid;
+  width: min(100%, 360px);
+  min-height: 260px;
+  place-items: center;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 32px 18px;
+  text-align: center;
+}
+
+.empty-state-drawer {
+  width: 100%;
+  min-height: 320px;
+}
+
+.empty-state-art {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.empty-state-art mat-icon {
+  width: 44px;
+  height: 44px;
+  font-size: 44px;
+}
+
+.empty-state-title {
+  margin: 6px 0 0;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-title-medium);
+}
+
+.empty-state-message {
+  max-width: 280px;
+  margin: 0;
+  color: var(--bs-secondary-color);
+  font: var(--mat-sys-body-medium);
+}
+
 @media (max-width: 599.98px) {
+  .notification-mark-read-action {
+    right: calc(80vw - 64px);
+  }
+
   .tool-section-grid {
     --bs-gutter-x: 0.65rem;
     --bs-gutter-y: 0.65rem;

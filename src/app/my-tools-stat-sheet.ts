@@ -15,6 +15,7 @@ export interface MyToolsStatSheetData {
   borrowedTools: Array<{
     borrowerFirstName: string;
     id: string;
+    loanDate: string;
     name: string;
   }>;
   donutBackground: string;
@@ -41,6 +42,20 @@ export class MyToolsStatSheetComponent implements AfterViewInit {
 
   close(): void {
     this.sheetRef.dismiss();
+  }
+
+  formatBorrowedDate(value: string): string {
+    const normalizedValue = value.trim();
+    if (!normalizedValue) {
+      return 'Date unavailable';
+    }
+
+    const parsedDate = new Date(`${normalizedValue}T00:00:00`);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return normalizedValue;
+    }
+
+    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(parsedDate);
   }
 
   ngAfterViewInit(): void {
